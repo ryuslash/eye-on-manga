@@ -30,7 +30,7 @@ static void c_new_item_dialog_init(CNewItemDialog *dialog)
 
   content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
-  hbox = gtk_vbox_new(FALSE, 0);
+  hbox = gtk_hbox_new(FALSE, 0);
   gtk_container_add(GTK_CONTAINER(content_area), hbox);
 
   dialog->name_entry = hildon_entry_new(HILDON_SIZE_AUTO);
@@ -38,6 +38,7 @@ static void c_new_item_dialog_init(CNewItemDialog *dialog)
   gtk_box_pack_start(GTK_BOX(hbox), dialog->name_entry, TRUE, TRUE, 0);
 
   dialog->qty_entry = hildon_entry_new(HILDON_SIZE_AUTO);
+  g_object_set(G_OBJECT(dialog->qty_entry), "width-chars", 5, NULL);
   hildon_entry_set_text(HILDON_ENTRY(dialog->qty_entry), "0");
   gtk_box_pack_start(GTK_BOX(hbox), dialog->qty_entry, TRUE, TRUE, 0);
 

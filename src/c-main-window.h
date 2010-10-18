@@ -45,16 +45,22 @@ struct _CMainWindow
 
   GtkTreeIter           iter;
   GtkListStore         *store;
+
+  GtkWidget *add_button;
+  GtkWidget *remove_button;
 };
 
 GType      c_main_window_get_type(void);
 
 GtkWidget *c_main_window_new(void);
 
+void       c_main_window_load(CMainWindow *self);
 void       c_main_window_add_line(CMainWindow *window,
                                   const gchar *name,
                                   gint current_qty,
                                   gint total_qty);
+void       c_main_window_set_no_select(CMainWindow *self);
+void       c_main_window_set_has_select(CMainWindow *self);
 
 G_END_DECLS
 
