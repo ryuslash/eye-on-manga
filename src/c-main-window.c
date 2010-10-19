@@ -10,7 +10,8 @@
 G_DEFINE_TYPE(CMainWindow, c_main_window, HILDON_TYPE_STACKABLE_WINDOW)
 
 enum {
-  COL_NAME = 0,
+  COL_ID = 0,
+  COL_NAME,
   COL_CURRENT,
   COL_TOTAL,
   NUM_COLS
@@ -20,6 +21,9 @@ static void c_main_window_add_menu(CMainWindow *window);
 static void c_main_window_on_new(GtkWidget *widget, GtkWindow *window);
 static void c_main_window_on_selection_changed(GtkTreeSelection *selection,
                                                gpointer user_data);
+static void c_main_window_on_add_clicked(GtkWidget *widget, gpointer user_data);
+static void c_main_window_on_remove_clicked(GtkWidget *widget,
+                                            gpointer user_data);
 
 GtkWidget *c_main_window_new(void)
 {
@@ -36,7 +40,8 @@ void c_main_window_load(CMainWindow *self)
 
   while (list) {
     struct collection *col = list->data;
-    c_main_window_add_line(self, col->name, col->current_qty, col->total_qty);
+    c_main_window_add_line(self, col->id, col->name,
+                           col->current_qty, col->total_qty);
     list = g_list_next(list);
   }
 
@@ -44,12 +49,14 @@ void c_main_window_load(CMainWindow *self)
 }
 
 void c_main_window_add_line(CMainWindow *window,
+                            gint id,
                             const gchar *name,
                             gint current_qty,
                             gint total_qty)
 {
   gtk_list_store_append(window->store, &window->iter);
   gtk_list_store_set(window ->store, &window->iter,
+                     COL_ID, id,
                      COL_NAME, name,
                      COL_CURRENT, current_qty,
                      COL_TOTAL, total_qty,
@@ -81,8 +88,8 @@ static void c_main_window_init(CMainWindow *window)
   GtkWidget         *view;
   GtkWidget         *vbox;
   GtkWidget         *hbuttonbox;
+  GtkWidget         *pannablearea;
   GtkTreeViewColumn *current_column;
-  GtkTreeSelection  *selection;
   int                index;
 
   index = -1;
@@ -93,17 +100,25 @@ static void c_main_window_init(CMainWindow *window)
   g_signal_connect(window, "delete-event", G_CALLBACK(gtk_main_quit), NULL);
 
   window->store = gtk_list_store_new(NUM_COLS,
+                                     G_TYPE_INT,
                                      G_TYPE_STRING,
                                      G_TYPE_INT,
                                      G_TYPE_INT);
 
   vbox = gtk_vbox_new(FALSE, 0);
 
-  view = gtk_tree_view_new();
-  gtk_box_pack_start(GTK_BOX(vbox), view, TRUE, TRUE, 0);
+  pannablearea = hildon_pannable_area_new();
+  g_object_set(G_OBJECT(pannablearea),
+               "mov-mode", HILDON_MOVEMENT_MODE_VERT,
+               NULL);
+  gtk_box_pack_start(GTK_BOX(vbox), pannablearea, TRUE, TRUE, 0);
 
-  selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
-  g_signal_connect(selection, "changed",
+  view = gtk_tree_view_new();
+  hildon_pannable_area_add_with_viewport(HILDON_PANNABLE_AREA(pannablearea),
+                                         view);
+
+  window->selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
+  g_signal_connect(window->selection, "changed",
                    G_CALLBACK(c_main_window_on_selection_changed),
                    (gpointer)window);
 
@@ -149,11 +164,28 @@ static void c_main_window_init(CMainWindow *window)
   gtk_button_box_set_layout(GTK_BUTTON_BOX(hbuttonbox), GTK_BUTTONBOX_END);
   gtk_box_pack_start(GTK_BOX(vbox), hbuttonbox, FALSE, TRUE, 0);
 
-  window->add_button = gtk_button_new_from_stock(GTK_STOCK_ADD);
+  window->add_button =
+    hildon_button_new_with_text(HILDON_SIZE_AUTO_WIDTH |
+                                HILDON_SIZE_FINGER_HEIGHT,
+                                HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
+                                "Add",
+                                NULL);
+  g_signal_connect(window->add_button, "clicked",
+                   G_CALLBACK(c_main_window_on_add_clicked),
+                   (gpointer)window);
   gtk_box_pack_start(GTK_BOX(hbuttonbox), window->add_button, FALSE, FALSE, 0);
 
-  window->remove_button = gtk_button_new_from_stock(GTK_STOCK_REMOVE);
-  gtk_box_pack_start(GTK_BOX(hbuttonbox), window->remove_button, FALSE, FALSE, 0);
+  window->remove_button =
+    hildon_button_new_with_text(HILDON_SIZE_AUTO_WIDTH |
+                                HILDON_SIZE_FINGER_HEIGHT,
+                                HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
+                                "Remove",
+                                NULL);
+  g_signal_connect(window->remove_button, "clicked",
+                   G_CALLBACK(c_main_window_on_remove_clicked),
+                   (gpointer)window);
+  gtk_box_pack_start(GTK_BOX(hbuttonbox),
+                     window->remove_button, FALSE, FALSE, 0);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
 
@@ -222,4 +254,55 @@ static void c_main_window_on_selection_changed(GtkTreeSelection *selection,
     c_main_window_set_no_select(self);
   else
     c_main_window_set_has_select(self);
+}
+
+static void c_main_window_on_add_clicked(GtkWidget *widget, gpointer user_data)
+{
+  CMainWindow *self;
+  gint count;
+
+  self = (CMainWindow *)user_data;
+  count = gtk_tree_selection_count_selected_rows(self->selection);
+
+  if (count > 0) {
+    GtkTreeModel *model;
+
+    if (gtk_tree_selection_get_selected(self->selection, &model, &self->iter)) {
+      gint id;
+      gint current_count;
+
+      gtk_tree_model_get(model, &self->iter, COL_ID, &id, -1);
+      gtk_tree_model_get(model, &self->iter, COL_CURRENT, &current_count, -1);
+      if (data_add_to_series(id, 1))
+        gtk_list_store_set(GTK_LIST_STORE(self->store), &self->iter,
+                           COL_CURRENT, current_count + 1, -1);
+
+    }
+  }
+}
+
+static void c_main_window_on_remove_clicked(GtkWidget *widget,
+                                            gpointer user_data)
+{
+  CMainWindow *self;
+  gint count;
+
+  self = (CMainWindow *)user_data;
+  count = gtk_tree_selection_count_selected_rows(self->selection);
+
+  if (count > 0) {
+    GtkTreeModel *model;
+
+    if (gtk_tree_selection_get_selected(self->selection, &model, &self->iter)) {
+      gint id;
+      gint current_count;
+
+      gtk_tree_model_get(model, &self->iter, COL_ID, &id, -1);
+      gtk_tree_model_get(model, &self->iter, COL_CURRENT, &current_count, -1);
+
+      if (current_count > 0 && data_add_to_series(id, -1))
+        gtk_list_store_set(GTK_LIST_STORE(self->store), &self->iter,
+                           COL_CURRENT, current_count - 1, -1);
+    }
+  }
 }

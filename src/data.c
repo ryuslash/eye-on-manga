@@ -9,7 +9,7 @@
 #include "collections.h"
 
 static gboolean data_check_and_create_database(gchar *data_file);
-static gint data_create_new_database(const char *filename);
+static gint data_create_new_database(const gchar *filename);
 
 GList *data_get_series(void)
 {
@@ -24,7 +24,8 @@ GList *data_get_series(void)
     if (sqlite3_open(data_file, &database) == SQLITE_OK) {
       int res;
       const char *sqlStatement =
-        " SELECT   name, "
+        " SELECT   id, "
+        "          name, "
         "          current_qty, "
         "          total_qty "
         " FROM     collection "
@@ -38,11 +39,12 @@ GList *data_get_series(void)
       if (res == SQLITE_OK) {
         while (sqlite3_step(statement) == SQLITE_ROW) {
           struct collection *col =
-            (struct collection *)malloc(sizeof(struct collection *));
+            (struct collection *)malloc(sizeof(struct collection));
 
-          col->name = g_strdup(sqlite3_column_text(statement, 0));
-          col->current_qty = sqlite3_column_int(statement, 1);
-          col->total_qty = sqlite3_column_int(statement, 2);
+          col->id = sqlite3_column_int(statement, 0);
+          col->name = g_strdup(sqlite3_column_text(statement, 1));
+          col->current_qty = sqlite3_column_int(statement, 2);
+          col->total_qty = sqlite3_column_int(statement, 3);
 
           list = g_list_append(list, (gpointer)col);
         }
@@ -51,14 +53,14 @@ GList *data_get_series(void)
         g_print("error %d: %s\n", res, sqlite3_errmsg(database));
       /* Release the compiled statement from memory */
       sqlite3_finalize(statement);
-    }
-    sqlite3_close(database);
+      }
+      sqlite3_close(database);
   }
 
   return list;
 }
 
-gboolean data_add_series(gchar *name, int total_qty)
+gboolean data_add_series(gchar *name, gint total_qty)
 {
   sqlite3 *database;
   sqlite3_stmt *statement;
@@ -87,6 +89,38 @@ gboolean data_add_series(gchar *name, int total_qty)
   return FALSE;
 }
 
+gboolean data_add_to_series(gint collection_id, gint count)
+{
+  sqlite3 *database;
+  sqlite3_stmt *statement;
+  gchar *data_file;
+
+  g_print("collection_id: %d, count: %d\n", collection_id, count);
+
+  data_file = collections_get_data_file();
+
+  if (data_check_and_create_database(data_file)) {
+    if (sqlite3_open(data_file, &database) == SQLITE_OK) {
+      int res;
+      const char *sqlStatement =
+        g_strdup_printf("UPDATE collection "
+                        " SET current_qty = current_qty + %d "
+                        " WHERE id = %d", count, collection_id);
+
+      res = sqlite3_prepare_v2(database,
+                               sqlStatement,
+                               strlen(sqlStatement),
+                               &statement, NULL);
+      if (res == SQLITE_OK) {
+        if (sqlite3_step(statement) == SQLITE_DONE)
+          return TRUE;
+      }
+    }
+  }
+
+  return FALSE;
+}
+
 static gboolean data_check_and_create_database(gchar *data_file)
 {
   if (!access(data_file, R_OK) == 0)
@@ -98,7 +132,7 @@ static gboolean data_check_and_create_database(gchar *data_file)
   return TRUE;
 }
 
-static gint data_create_new_database(const char *filename)
+static gint data_create_new_database(const gchar *filename)
 {
   sqlite3 *db;
   char *zErrMsg = 0;
