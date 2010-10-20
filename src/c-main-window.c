@@ -24,6 +24,8 @@ static void c_main_window_on_selection_changed(GtkTreeSelection *selection,
 static void c_main_window_on_add_clicked(GtkWidget *widget, gpointer user_data);
 static void c_main_window_on_remove_clicked(GtkWidget *widget,
                                             gpointer user_data);
+static void c_main_window_on_edit_clicked(GtkWidget *widget,
+                                          gpointer user_data);
 
 GtkWidget *c_main_window_new(void)
 {
@@ -175,6 +177,17 @@ static void c_main_window_init(CMainWindow *window)
                    (gpointer)window);
   gtk_box_pack_start(GTK_BOX(hbuttonbox), window->add_button, FALSE, FALSE, 0);
 
+  window->edit_button =
+    hildon_button_new_with_text(HILDON_SIZE_AUTO_WIDTH |
+                                HILDON_SIZE_FINGER_HEIGHT,
+                                HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
+                                "Edit",
+                                NULL);
+  g_signal_connect(window->edit_button, "clicked",
+                   G_CALLBACK(c_main_window_on_edit_clicked),
+                   (gpointer)window);
+  gtk_box_pack_start(GTK_BOX(hbuttonbox), window->edit_button, FALSE, FALSE, 0);
+
   window->remove_button =
     hildon_button_new_with_text(HILDON_SIZE_AUTO_WIDTH |
                                 HILDON_SIZE_FINGER_HEIGHT,
@@ -305,4 +318,15 @@ static void c_main_window_on_remove_clicked(GtkWidget *widget,
                            COL_CURRENT, current_count - 1, -1);
     }
   }
+}
+
+static void c_main_window_on_edit_clicked(GtkWidget *widget,
+                                          gpointer user_data)
+{
+  CMainWindow *self;
+
+  self = (CMainWindow *)user_data;
+
+  /* TODO: Place more code here */
+  interface_show_edit_window();
 }

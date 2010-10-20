@@ -5,6 +5,7 @@ all:
 		collections.c \
 		interface.c \
 		c-main-window.c \
+		c-edit-window.c \
 		c-new-item-dialog.c \
 		data.c \
 		$(CFLAGS) \
