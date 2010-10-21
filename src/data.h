@@ -1,6 +1,8 @@
 #include <gtk/gtk.h>
 
-struct collection
+typedef struct _manga Manga;
+
+struct _manga
 {
   int   id;
   int   current_qty;
@@ -8,8 +10,8 @@ struct collection
   char *name;
 };
 
-GList             *data_get_series(void);
-struct collection *data_get_series_by_id(gint collection_id);
-gint              *data_get_items_by_collection_id(gint collection_id);
-gboolean           data_add_series(gchar *name, gint total_qty);
-gboolean           data_add_to_series(gint id, gint count);
+GList    *data_get_manga(void);
+Manga    *data_get_manga_by_id(gint manga_id);
+gint     *data_get_volumes_by_manga_id(gint manga_id);
+gboolean  data_add_manga(gchar *name, gint total_qty);
+gboolean  data_add_to_manga(gint id, gint count);

@@ -1,29 +1,29 @@
-#include "c-new-item-dialog.h"
+#include "eom-new-item-dialog.h"
 #include <hildon/hildon-entry.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
 
-G_DEFINE_TYPE(CNewItemDialog, c_new_item_dialog, GTK_TYPE_DIALOG)
+G_DEFINE_TYPE(EomNewItemDialog, eom_new_item_dialog, GTK_TYPE_DIALOG)
 
-GtkWidget *c_new_item_dialog_new(void)
+GtkWidget *eom_new_item_dialog_new(void)
 {
-  return g_object_new(C_TYPE_NEW_ITEM_DIALOG, NULL);
+  return g_object_new(EOM_TYPE_NEW_ITEM_DIALOG, NULL);
 }
 
-const gchar *c_new_item_dialog_get_name(CNewItemDialog *dialog)
+const gchar *eom_new_item_dialog_get_name(EomNewItemDialog *dialog)
 {
   return hildon_entry_get_text(HILDON_ENTRY(dialog->name_entry));
 }
 
-gint c_new_item_dialog_get_total_qty(CNewItemDialog *dialog)
+gint eom_new_item_dialog_get_total_qty(EomNewItemDialog *dialog)
 {
   return atoi(hildon_entry_get_text(HILDON_ENTRY(dialog->qty_entry)));
 }
 
-static void c_new_item_dialog_class_init(CNewItemDialogClass *class)
+static void eom_new_item_dialog_class_init(EomNewItemDialogClass *class)
 {}
 
-static void c_new_item_dialog_init(CNewItemDialog *dialog)
+static void eom_new_item_dialog_init(EomNewItemDialog *dialog)
 {
   GtkWidget *content_area;
   GtkWidget *hbox;

@@ -1,35 +1,35 @@
-#include "c-edit-window.h"
+#include "eom-edit-window.h"
 #include <hildon/hildon.h>
 #include <limits.h>
 #include "data.h"
 
 enum {
-  C_EDIT_PROP_0,
-  C_EDIT_PROP_CID
+  EOM_EDIT_PROP_0,
+  EOM_EDIT_PROP_CID
 };
 
-static void c_edit_window_set_collection_id(CEditWindow *self,
-                                            gint collection_id);
+static void eom_edit_window_set_manga_id(EomEditWindow *self,
+                                       gint manga_id);
 
-G_DEFINE_TYPE(CEditWindow, c_edit_window, HILDON_TYPE_STACKABLE_WINDOW)
+G_DEFINE_TYPE(EomEditWindow, eom_edit_window, HILDON_TYPE_STACKABLE_WINDOW)
 
-GtkWidget *c_edit_window_new(gint collection_id)
+GtkWidget *eom_edit_window_new(gint manga_id)
 {
-  g_print("1: %d\n", collection_id);
-  return g_object_new(C_TYPE_EDIT_WINDOW, "collection-id", collection_id, NULL);
+  g_print("1: %d\n", manga_id);
+  return g_object_new(EOM_TYPE_EDIT_WINDOW, "manga-id", manga_id, NULL);
 }
 
-static void c_edit_window_set_property(GObject      *object,
-                                       guint         property_id,
-                                       const GValue *value,
-                                       GParamSpec   *pspec)
+static void eom_edit_window_set_property(GObject      *object,
+                                         guint         property_id,
+                                         const GValue *value,
+                                         GParamSpec   *pspec)
 {
-  CEditWindow *self = C_EDIT_WINDOW(object);
+  EomEditWindow *self = EOM_EDIT_WINDOW(object);
 
   switch (property_id) {
-  case C_EDIT_PROP_CID:
+  case EOM_EDIT_PROP_CID:
     g_print("2: %d\n", g_value_get_int(value));
-    self->collection_id = g_value_get_int(value);
+    self->manga_id = g_value_get_int(value);
     break;
   default:
     /* We don't have any other properties */
@@ -38,16 +38,16 @@ static void c_edit_window_set_property(GObject      *object,
   }
 }
 
-static void c_edit_window_get_property(GObject    *object,
-                                       guint       property_id,
-                                       GValue     *value,
-                                       GParamSpec *pspec)
+static void eom_edit_window_get_property(GObject    *object,
+                                         guint       property_id,
+                                         GValue     *value,
+                                         GParamSpec *pspec)
 {
-  CEditWindow *self = C_EDIT_WINDOW(object);
+  EomEditWindow *self = EOM_EDIT_WINDOW(object);
 
   switch (property_id) {
-  case C_EDIT_PROP_CID:
-    g_value_set_int(value, self->collection_id);
+  case EOM_EDIT_PROP_CID:
+    g_value_set_int(value, self->manga_id);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -55,27 +55,27 @@ static void c_edit_window_get_property(GObject    *object,
   }
 }
 
-static void c_edit_window_class_init(CEditWindowClass *klass)
+static void eom_edit_window_class_init(EomEditWindowClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
   GParamSpec   *pspec;
 
-  gobject_class->set_property = c_edit_window_set_property;
-  gobject_class->get_property = c_edit_window_get_property;
+  gobject_class->set_property = eom_edit_window_set_property;
+  gobject_class->get_property = eom_edit_window_get_property;
 
-  pspec = g_param_spec_int("collection-id",
-                           "ID for the collection",
-                           "Set the collection-id",
+  pspec = g_param_spec_int("manga-id",
+                           "ID of the manga",
+                           "Set the manga-id",
                            0,
                            INT_MAX,
                            0,
                            G_PARAM_CONSTRUCT_ONLY | G_PARAM_WRITABLE);
   g_object_class_install_property(gobject_class,
-                                  C_EDIT_PROP_CID,
+                                  EOM_EDIT_PROP_CID,
                                   pspec);
 }
 
-static void c_edit_window_init(CEditWindow *self)
+static void eom_edit_window_init(EomEditWindow *self)
 {
   GtkWidget *pannablearea;
   GtkWidget *table;
@@ -84,7 +84,7 @@ static void c_edit_window_init(CEditWindow *self)
   GtkWidget *totalclabel;
   GtkWidget *vbox;
 
-  g_print("3: %d\n", self->collection_id);
+  g_print("3: %d\n", self->manga_id);
 
   pannablearea = hildon_pannable_area_new();
   g_object_set(G_OBJECT(pannablearea),
@@ -131,20 +131,20 @@ static void c_edit_window_init(CEditWindow *self)
                    GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 }
 
-static void c_edit_window_set_collection_id(CEditWindow *self,
-                                            gint collection_id)
+static void eom_edit_window_set_manga_id(EomEditWindow *self,
+                                         gint manga_id)
 {
-  struct collection *col;
-  gint *items;
+  Manga *manga;
+  gint *volumes;
 
-  col = data_get_series_by_id(collection_id);
-  items = data_get_items_by_collection_id(collection_id);
+  manga = data_get_manga_by_id(manga_id);
+  volumes = data_get_volumes_by_manga_id(manga_id);
 
-  gtk_label_set_text(GTK_LABEL(self->name_label), col->name);
+  gtk_label_set_text(GTK_LABEL(self->name_label), manga->name);
   gtk_label_set_text(GTK_LABEL(self->have_label),
-                     g_strdup_printf("%d", col->current_qty));
+                     g_strdup_printf("%d", manga->current_qty));
   gtk_label_set_text(GTK_LABEL(self->total_label),
-                     g_strdup_printf("%d", col->total_qty));
+                     g_strdup_printf("%d", manga->total_qty));
 
-  g_free(col);
+  g_free(manga);
 }

@@ -1,15 +1,15 @@
 CFLAGS=`pkg-config hildon-1 sqlite3 --cflags --libs`
 
 all:
-	$(CC) -Wall -Wextra -pedantic \
-		collections.c \
+	$(CC) -Wall -pedantic \
+		eom.c \
 		interface.c \
-		c-main-window.c \
-		c-edit-window.c \
-		c-new-item-dialog.c \
+		eom-main-window.c \
+		eom-edit-window.c \
+		eom-new-item-dialog.c \
 		data.c \
 		$(CFLAGS) \
-		-o collections
+		-o eye-on-manga
 
 .PHONY: check-syntax
 check-syntax:

@@ -1,13 +1,13 @@
-#include "c-main-window.h"
+#include "eom-main-window.h"
 #include <hildon/hildon.h>
 #include <gtk/gtk.h>
 #include <string.h>
 #include <stdlib.h>
-#include "c-new-item-dialog.h"
+#include "eom-new-item-dialog.h"
 #include "data.h"
 #include "interface.h"
 
-G_DEFINE_TYPE(CMainWindow, c_main_window, HILDON_TYPE_STACKABLE_WINDOW)
+G_DEFINE_TYPE(EomMainWindow, eom_main_window, HILDON_TYPE_STACKABLE_WINDOW)
 
 enum {
   COL_ID = 0,
@@ -17,44 +17,45 @@ enum {
   NUM_COLS
 };
 
-static void c_main_window_add_menu(CMainWindow *window);
-static void c_main_window_on_new(GtkWidget *widget, GtkWindow *window);
-static void c_main_window_on_selection_changed(GtkTreeSelection *selection,
-                                               gpointer user_data);
-static void c_main_window_on_add_clicked(GtkWidget *widget, gpointer user_data);
-static void c_main_window_on_remove_clicked(GtkWidget *widget,
+static void eom_main_window_add_menu(EomMainWindow *window);
+static void eom_main_window_on_new(GtkWidget *widget, GtkWindow *window);
+static void eom_main_window_on_selection_changed(GtkTreeSelection *selection,
+                                                 gpointer user_data);
+static void eom_main_window_on_add_clicked(GtkWidget *widget,
+                                           gpointer user_data);
+static void eom_main_window_on_remove_clicked(GtkWidget *widget,
+                                              gpointer user_data);
+static void eom_main_window_on_edit_clicked(GtkWidget *widget,
                                             gpointer user_data);
-static void c_main_window_on_edit_clicked(GtkWidget *widget,
-                                          gpointer user_data);
 
-GtkWidget *c_main_window_new(void)
+GtkWidget *eom_main_window_new(void)
 {
-  return g_object_new(C_TYPE_MAIN_WINDOW, NULL);
+  return g_object_new(EOM_TYPE_MAIN_WINDOW, NULL);
 }
 
-void c_main_window_load(CMainWindow *self)
+void eom_main_window_load(EomMainWindow *self)
 {
   GList *list;
 
   gtk_list_store_clear(self->store);
 
-  list = data_get_series();
+  list = data_get_manga();
 
   while (list) {
-    struct collection *col = list->data;
-    c_main_window_add_line(self, col->id, col->name,
-                           col->current_qty, col->total_qty);
+    Manga *manga = list->data;
+    eom_main_window_add_line(self, manga->id, manga->name,
+                             manga->current_qty, manga->total_qty);
     list = g_list_next(list);
   }
 
   g_list_free_1(list);
 }
 
-void c_main_window_add_line(CMainWindow *window,
-                            gint id,
-                            const gchar *name,
-                            gint current_qty,
-                            gint total_qty)
+void eom_main_window_add_line(EomMainWindow *window,
+                              gint id,
+                              const gchar *name,
+                              gint current_qty,
+                              gint total_qty)
 {
   gtk_list_store_append(window->store, &window->iter);
   gtk_list_store_set(window ->store, &window->iter,
@@ -65,7 +66,7 @@ void c_main_window_add_line(CMainWindow *window,
                      -1);
 }
 
-void c_main_window_set_no_select(CMainWindow *self)
+void eom_main_window_set_no_select(EomMainWindow *self)
 {
   if (GTK_IS_WIDGET(self->add_button))
     gtk_widget_set_sensitive(GTK_WIDGET(self->add_button), FALSE);
@@ -73,7 +74,7 @@ void c_main_window_set_no_select(CMainWindow *self)
     gtk_widget_set_sensitive(GTK_WIDGET(self->remove_button), FALSE);
 }
 
-void c_main_window_set_has_select(CMainWindow *self)
+void eom_main_window_set_has_select(EomMainWindow *self)
 {
   if (GTK_IS_WIDGET(self->add_button))
     gtk_widget_set_sensitive(GTK_WIDGET(self->add_button), TRUE);
@@ -81,10 +82,10 @@ void c_main_window_set_has_select(CMainWindow *self)
     gtk_widget_set_sensitive(GTK_WIDGET(self->remove_button), TRUE);
 }
 
-static void c_main_window_class_init(CMainWindowClass *class)
+static void eom_main_window_class_init(EomMainWindowClass *class)
 {}
 
-static void c_main_window_init(CMainWindow *window)
+static void eom_main_window_init(EomMainWindow *window)
 {
   GtkCellRenderer   *renderer;
   GtkWidget         *view;
@@ -96,7 +97,7 @@ static void c_main_window_init(CMainWindow *window)
 
   index = -1;
 
-  c_main_window_add_menu(window);
+  eom_main_window_add_menu(window);
 
   g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
   g_signal_connect(window, "delete-event", G_CALLBACK(gtk_main_quit), NULL);
@@ -121,7 +122,7 @@ static void c_main_window_init(CMainWindow *window)
 
   window->selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
   g_signal_connect(window->selection, "changed",
-                   G_CALLBACK(c_main_window_on_selection_changed),
+                   G_CALLBACK(eom_main_window_on_selection_changed),
                    (gpointer)window);
 
   renderer = gtk_cell_renderer_text_new();
@@ -173,7 +174,7 @@ static void c_main_window_init(CMainWindow *window)
                                 "Add",
                                 NULL);
   g_signal_connect(window->add_button, "clicked",
-                   G_CALLBACK(c_main_window_on_add_clicked),
+                   G_CALLBACK(eom_main_window_on_add_clicked),
                    (gpointer)window);
   gtk_box_pack_start(GTK_BOX(hbuttonbox), window->add_button, FALSE, FALSE, 0);
 
@@ -184,7 +185,7 @@ static void c_main_window_init(CMainWindow *window)
                                 "Edit",
                                 NULL);
   g_signal_connect(window->edit_button, "clicked",
-                   G_CALLBACK(c_main_window_on_edit_clicked),
+                   G_CALLBACK(eom_main_window_on_edit_clicked),
                    (gpointer)window);
   gtk_box_pack_start(GTK_BOX(hbuttonbox), window->edit_button, FALSE, FALSE, 0);
 
@@ -195,17 +196,17 @@ static void c_main_window_init(CMainWindow *window)
                                 "Remove",
                                 NULL);
   g_signal_connect(window->remove_button, "clicked",
-                   G_CALLBACK(c_main_window_on_remove_clicked),
+                   G_CALLBACK(eom_main_window_on_remove_clicked),
                    (gpointer)window);
   gtk_box_pack_start(GTK_BOX(hbuttonbox),
                      window->remove_button, FALSE, FALSE, 0);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
 
-  c_main_window_set_no_select(window);
+  eom_main_window_set_no_select(window);
 }
 
-static void c_main_window_add_menu(CMainWindow *window)
+static void eom_main_window_add_menu(EomMainWindow *window)
 {
   GtkWidget *appmenu;
   GtkWidget *new_button;
@@ -213,10 +214,10 @@ static void c_main_window_add_menu(CMainWindow *window)
   appmenu = hildon_app_menu_new();
 
   new_button = hildon_gtk_button_new(HILDON_SIZE_AUTO);
-  gtk_button_set_label(GTK_BUTTON(new_button), "New Item");
+  gtk_button_set_label(GTK_BUTTON(new_button), "New Manga");
   g_signal_connect_after(new_button,
                          "clicked",
-                         G_CALLBACK(c_main_window_on_new),
+                         G_CALLBACK(eom_main_window_on_new),
                          GTK_WINDOW(window));
 
   hildon_app_menu_append(HILDON_APP_MENU(appmenu), GTK_BUTTON(new_button));
@@ -226,7 +227,7 @@ static void c_main_window_add_menu(CMainWindow *window)
                                         HILDON_APP_MENU(appmenu));
 }
 
-static void c_main_window_on_new(GtkWidget *widget, GtkWindow *window)
+static void eom_main_window_on_new(GtkWidget *widget, GtkWindow *window)
 {
   GtkWidget *dialog;
   gint result;
@@ -239,42 +240,42 @@ static void c_main_window_on_new(GtkWidget *widget, GtkWindow *window)
 
   if (result == GTK_RESPONSE_OK) {
     const gchar *tmp;
-    tmp = c_new_item_dialog_get_name(C_NEW_ITEM_DIALOG(dialog));
+    tmp = eom_new_item_dialog_get_name(EOM_NEW_ITEM_DIALOG(dialog));
     name = (gchar *)malloc(strlen(tmp) + 1);
 
     strcpy(name, tmp);
     strcat(name, "\0");
 
-    total_qty = c_new_item_dialog_get_total_qty(C_NEW_ITEM_DIALOG(dialog));
+    total_qty = eom_new_item_dialog_get_total_qty(EOM_NEW_ITEM_DIALOG(dialog));
 
     gtk_widget_destroy(dialog);
   }
 
   if (name != NULL) {
-    if (data_add_series(name, total_qty))
-      c_main_window_load(C_MAIN_WINDOW(window));
+    if (data_add_manga(name, total_qty))
+      eom_main_window_load(EOM_MAIN_WINDOW(window));
   }
 }
 
-static void c_main_window_on_selection_changed(GtkTreeSelection *selection,
+static void eom_main_window_on_selection_changed(GtkTreeSelection *selection,
                                                gpointer user_data)
 {
   gint count;
-  CMainWindow *self = (CMainWindow *)user_data;
+  EomMainWindow *self = (EomMainWindow *)user_data;
 
   count = gtk_tree_selection_count_selected_rows(selection);
   if (count == 0)
-    c_main_window_set_no_select(self);
+    eom_main_window_set_no_select(self);
   else
-    c_main_window_set_has_select(self);
+    eom_main_window_set_has_select(self);
 }
 
-static void c_main_window_on_add_clicked(GtkWidget *widget, gpointer user_data)
+static void eom_main_window_on_add_clicked(GtkWidget *widget, gpointer user_data)
 {
-  CMainWindow *self;
+  EomMainWindow *self;
   gint count;
 
-  self = (CMainWindow *)user_data;
+  self = (EomMainWindow *)user_data;
   count = gtk_tree_selection_count_selected_rows(self->selection);
 
   if (count > 0) {
@@ -286,7 +287,7 @@ static void c_main_window_on_add_clicked(GtkWidget *widget, gpointer user_data)
 
       gtk_tree_model_get(model, &self->iter, COL_ID, &id, -1);
       gtk_tree_model_get(model, &self->iter, COL_CURRENT, &current_count, -1);
-      if (data_add_to_series(id, 1))
+      if (data_add_to_manga(id, 1))
         gtk_list_store_set(GTK_LIST_STORE(self->store), &self->iter,
                            COL_CURRENT, current_count + 1, -1);
 
@@ -294,13 +295,13 @@ static void c_main_window_on_add_clicked(GtkWidget *widget, gpointer user_data)
   }
 }
 
-static void c_main_window_on_remove_clicked(GtkWidget *widget,
+static void eom_main_window_on_remove_clicked(GtkWidget *widget,
                                             gpointer user_data)
 {
-  CMainWindow *self;
+  EomMainWindow *self;
   gint count;
 
-  self = (CMainWindow *)user_data;
+  self = (EomMainWindow *)user_data;
   count = gtk_tree_selection_count_selected_rows(self->selection);
 
   if (count > 0) {
@@ -313,19 +314,19 @@ static void c_main_window_on_remove_clicked(GtkWidget *widget,
       gtk_tree_model_get(model, &self->iter, COL_ID, &id, -1);
       gtk_tree_model_get(model, &self->iter, COL_CURRENT, &current_count, -1);
 
-      if (current_count > 0 && data_add_to_series(id, -1))
+      if (current_count > 0 && data_add_to_manga(id, -1))
         gtk_list_store_set(GTK_LIST_STORE(self->store), &self->iter,
                            COL_CURRENT, current_count - 1, -1);
     }
   }
 }
 
-static void c_main_window_on_edit_clicked(GtkWidget *widget,
+static void eom_main_window_on_edit_clicked(GtkWidget *widget,
                                           gpointer user_data)
 {
-  CMainWindow *self;
+  EomMainWindow *self;
 
-  self = (CMainWindow *)user_data;
+  self = (EomMainWindow *)user_data;
 
   /* TODO: Place more code here */
   interface_show_edit_window();

@@ -1,26 +1,26 @@
 #include <hildon/hildon.h>
 #include <stdlib.h>
 #include "interface.h"
-#include "collections.h"
+#include "eom.h"
 
-gchar *collections_get_data_file(void)
+gchar *eom_get_data_file(void)
 {
   static gchar *filedir = NULL;
 
   if (filedir == NULL) {
-    filedir = g_strdup_printf("%s/collections.db",
-                              collections_get_config_dir());
+    filedir = g_strdup_printf("%s/eye-on-manga.db",
+                              eom_get_config_dir());
   }
 
   return filedir;
 }
 
-gchar *collections_get_config_dir(void)
+gchar *eom_get_config_dir(void)
 {
   static gchar *filedir = NULL;
 
   if (filedir == NULL) {
-    filedir = g_strdup_printf("%s/.collections", getenv("HOME"));
+    filedir = g_strdup_printf("%s/.eom", getenv("HOME"));
   }
 
   return filedir;
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 {
   hildon_gtk_init(&argc, &argv);
 
-  g_set_application_name("Collections");
+  g_set_application_name("Eye on Manga");
 
   interface_show_main_window();
 
