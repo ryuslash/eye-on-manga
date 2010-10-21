@@ -137,7 +137,7 @@ static void c_edit_window_set_collection_id(CEditWindow *self,
   struct collection *col;
   gint *items;
 
-  col = data_get_collection_by_id(collection_id);
+  col = data_get_series_by_id(collection_id);
   items = data_get_items_by_collection_id(collection_id);
 
   gtk_label_set_text(GTK_LABEL(self->name_label), col->name);
