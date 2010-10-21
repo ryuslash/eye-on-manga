@@ -8,6 +8,8 @@ struct collection
   char *name;
 };
 
-GList    *data_get_series(void);
-gboolean  data_add_series(gchar *name, gint total_qty);
-gboolean  data_add_to_series(gint id, gint count);
+GList             *data_get_series(void);
+struct collection *data_get_series_by_id(gint collection_id);
+gint              *data_get_items_by_collection_id(gint collection_id);
+gboolean           data_add_series(gchar *name, gint total_qty);
+gboolean           data_add_to_series(gint id, gint count);

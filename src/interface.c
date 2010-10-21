@@ -22,7 +22,7 @@ void interface_show_edit_window(void)
 
   stack = hildon_window_stack_get_default();
 
-  window = c_edit_window_new();
+  window = c_edit_window_new(1);
   hildon_window_stack_push(stack, HILDON_STACKABLE_WINDOW(window), NULL);
   gtk_widget_show_all(window);
 }
