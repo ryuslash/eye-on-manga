@@ -42,11 +42,17 @@ struct _CEditWindowClass
 struct _CEditWindow
 {
   HildonStackableWindow parent;
+
+  GtkWidget *name_label;
+  GtkWidget *have_label;
+  GtkWidget *total_label;
+
+  gint collection_id;
 };
 
-GType c_edit_window_get_type(void);
+GType      c_edit_window_get_type(void);
 
-GtkWidget *c_edit_window_new(void);
+GtkWidget *c_edit_window_new(gint collection_id);
 
 G_END_DECLS
 
