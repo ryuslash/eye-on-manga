@@ -88,7 +88,7 @@ Manga *data_get_manga_by_id(gint manga_id)
   return manga;
 }
 
-gint *data_get_volumes_by_manga_id(gint manga_id)
+void data_get_volumes_by_manga_id(gint manga_id, gint *size, gint **vols)
 {
   gint          count;
   gint         *volumes;
@@ -103,10 +103,11 @@ gint *data_get_volumes_by_manga_id(gint manga_id)
     if (sqlite3_open(data_file, &database) == SQLITE_OK) {
       int res;
       const char *sql = g_strdup_printf(
-        " SELECT COUNT(number)      "
+        " SELECT COUNT(id)          "
         " FROM   volume             "
-        " WHERE  collection_id = %d ", manga_id);
+        " WHERE  manga_id = %d ", manga_id);
 
+      g_print("%s\n", sql);
       res = sqlite3_prepare_v2(database, sql, strlen(sql), &statement, NULL);
       if (res == SQLITE_OK) {
         if (sqlite3_step(statement) == SQLITE_ROW) {
@@ -114,18 +115,21 @@ gint *data_get_volumes_by_manga_id(gint manga_id)
         }
       }
       sqlite3_finalize(statement);
+      g_print("%d: %d\n", manga_id, count);
 
       if (count > 0) {
         sql = g_strdup_printf(
-          " SELECT number            "
-          " FROM volume              "
-          " WHERE collection_id = %d ", manga_id);
-
+          " SELECT id                 "
+          " FROM   volume             "
+          " WHERE  manga_id = %d ", manga_id);
+        g_print("%s\n", sql);
         res = sqlite3_prepare_v2(database, sql, strlen(sql), &statement, NULL);
         if (res == SQLITE_OK) {
           gint i = 0;
           while (sqlite3_step(statement) == SQLITE_ROW) {
-            volumes[i++] = sqlite3_column_int(statement, 0);
+            gint volume = sqlite3_column_int(statement, 0);
+            g_print("volume: %d\n", volume);
+            volumes[i++] = volume;
           }
         }
       }
@@ -133,7 +137,8 @@ gint *data_get_volumes_by_manga_id(gint manga_id)
     sqlite3_close(database);
   }
 
-  return volumes;
+  *size = count;
+  *vols = volumes;
 }
 
 gboolean data_add_manga(gchar *name, gint total_qty)
@@ -203,6 +208,89 @@ gboolean data_add_to_manga(gint manga_id, gint count)
   return result;
 }
 
+gboolean data_add_volume_to_manga(gint manga_id, gint volume)
+{
+  sqlite3 *database;
+  sqlite3_stmt *statement;
+  gchar *data_file;
+  gboolean result;
+
+  data_file = eom_get_data_file();
+  result = FALSE;
+
+  if (data_check_and_create_database(data_file)) {
+    if (sqlite3_open(data_file, &database) == SQLITE_OK) {
+      int res;
+      const char *sql = g_strdup_printf(
+        " INSERT INTO volume "
+        " VALUES (%d, %d) ", manga_id, volume);
+
+      res = sqlite3_prepare_v2(database,
+                               sql,
+                               strlen(sql),
+                               &statement, NULL);
+      if (res == SQLITE_OK) {
+        res = sqlite3_step(statement);
+        if (res == SQLITE_DONE)
+          result = TRUE;
+        else
+          g_print("step did not return DONE, it DID return %d\n", res);
+      }
+      else
+        g_print("res was not OK\n");
+      sqlite3_finalize(statement);
+    }
+    else
+      g_print("database wasn't opened\n");
+    sqlite3_close(database);
+  }
+  else
+    g_print("couldn't check or create database\n");
+
+  return result;
+}
+
+gboolean data_remove_volume_from_manga(gint manga_id, gint volume)
+{
+  sqlite3      *database;
+  sqlite3_stmt *statement;
+  gchar        *data_file;
+  gboolean      result;
+
+  data_file = eom_get_data_file();
+  result = FALSE;
+
+  if (data_check_and_create_database(data_file)) {
+    if (sqlite3_open(data_file, &database) == SQLITE_OK) {
+      int res;
+      const char *sql = g_strdup_printf(
+        " DELETE FROM volume "
+        " WHERE manga_id = %d "
+        " AND id = %d ", manga_id, volume);
+
+      res = sqlite3_prepare_v2(database,
+                               sql,
+                               strlen(sql),
+                               &statement, NULL);
+      if (res == SQLITE_OK)
+        if (sqlite3_step(statement) == SQLITE_DONE)
+          result = TRUE;
+        else
+          g_print("step did not return DONE\n");
+      else
+        g_print("result did not return OK\n");
+      sqlite3_finalize(statement);
+    }
+    else
+      g_print("couldn't open database\n");
+    sqlite3_close(database);
+  }
+  else
+    g_print("couldn't check or create database\n");
+
+  return result;
+}
+
 static gboolean data_check_and_create_database(gchar *data_file)
 {
   if (!access(data_file, R_OK) == 0)
@@ -251,11 +339,11 @@ static gint data_create_new_database(const gchar *filename)
   /* Create items table */
   rc = sqlite3_exec(db,
                     " CREATE TABLE volume( "
-                    " collection_id INTEGER, "
+                    " manga_id INTEGER, "
                     " id INTEGER, "
-                    " PRIMARY KEY(collection_id, id), "
-                    " FOREIGN KEY(collection_id) "
-                    "   REFERENCES collection(id)) ",
+                    " PRIMARY KEY(manga_id, id), "
+                    " FOREIGN KEY(manga_id) "
+                    "   REFERENCES manga(id)) ",
                     NULL, NULL, &zErrMsg);
   if (rc != SQLITE_OK) {
     g_printerr("Can't create volume table: %s\n", zErrMsg);

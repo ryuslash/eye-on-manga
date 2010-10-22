@@ -47,8 +47,6 @@ struct _EomMainWindow
   GtkListStore         *store;
   GtkTreeSelection     *selection;
 
-  GtkWidget *add_button;
-  GtkWidget *remove_button;
   GtkWidget *edit_button;
 };
 

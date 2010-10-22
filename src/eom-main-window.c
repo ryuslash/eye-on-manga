@@ -27,6 +27,9 @@ static void eom_main_window_on_remove_clicked(GtkWidget *widget,
                                               gpointer user_data);
 static void eom_main_window_on_edit_clicked(GtkWidget *widget,
                                             gpointer user_data);
+static gboolean eom_main_window_on_edit_closed(GtkWidget *widget,
+                                               GdkEvent *event,
+                                               gpointer user_data);
 
 GtkWidget *eom_main_window_new(void)
 {
@@ -68,18 +71,14 @@ void eom_main_window_add_line(EomMainWindow *window,
 
 void eom_main_window_set_no_select(EomMainWindow *self)
 {
-  if (GTK_IS_WIDGET(self->add_button))
-    gtk_widget_set_sensitive(GTK_WIDGET(self->add_button), FALSE);
-  if (GTK_IS_WIDGET(self->remove_button))
-    gtk_widget_set_sensitive(GTK_WIDGET(self->remove_button), FALSE);
+  if (GTK_IS_WIDGET(self->edit_button))
+    gtk_widget_set_sensitive(GTK_WIDGET(self->edit_button), FALSE);
 }
 
 void eom_main_window_set_has_select(EomMainWindow *self)
 {
-  if (GTK_IS_WIDGET(self->add_button))
-    gtk_widget_set_sensitive(GTK_WIDGET(self->add_button), TRUE);
-  if (GTK_IS_WIDGET(self->remove_button))
-    gtk_widget_set_sensitive(GTK_WIDGET(self->remove_button), TRUE);
+  if (GTK_IS_WIDGET(self->edit_button))
+    gtk_widget_set_sensitive(GTK_WIDGET(self->edit_button), TRUE);
 }
 
 static void eom_main_window_class_init(EomMainWindowClass *class)
@@ -167,17 +166,6 @@ static void eom_main_window_init(EomMainWindow *window)
   gtk_button_box_set_layout(GTK_BUTTON_BOX(hbuttonbox), GTK_BUTTONBOX_END);
   gtk_box_pack_start(GTK_BOX(vbox), hbuttonbox, FALSE, TRUE, 0);
 
-  window->add_button =
-    hildon_button_new_with_text(HILDON_SIZE_AUTO_WIDTH |
-                                HILDON_SIZE_FINGER_HEIGHT,
-                                HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
-                                "Add",
-                                NULL);
-  g_signal_connect(window->add_button, "clicked",
-                   G_CALLBACK(eom_main_window_on_add_clicked),
-                   (gpointer)window);
-  gtk_box_pack_start(GTK_BOX(hbuttonbox), window->add_button, FALSE, FALSE, 0);
-
   window->edit_button =
     hildon_button_new_with_text(HILDON_SIZE_AUTO_WIDTH |
                                 HILDON_SIZE_FINGER_HEIGHT,
@@ -188,18 +176,6 @@ static void eom_main_window_init(EomMainWindow *window)
                    G_CALLBACK(eom_main_window_on_edit_clicked),
                    (gpointer)window);
   gtk_box_pack_start(GTK_BOX(hbuttonbox), window->edit_button, FALSE, FALSE, 0);
-
-  window->remove_button =
-    hildon_button_new_with_text(HILDON_SIZE_AUTO_WIDTH |
-                                HILDON_SIZE_FINGER_HEIGHT,
-                                HILDON_BUTTON_ARRANGEMENT_HORIZONTAL,
-                                "Remove",
-                                NULL);
-  g_signal_connect(window->remove_button, "clicked",
-                   G_CALLBACK(eom_main_window_on_remove_clicked),
-                   (gpointer)window);
-  gtk_box_pack_start(GTK_BOX(hbuttonbox),
-                     window->remove_button, FALSE, FALSE, 0);
 
   gtk_container_add(GTK_CONTAINER(window), vbox);
 
@@ -270,7 +246,7 @@ static void eom_main_window_on_selection_changed(GtkTreeSelection *selection,
     eom_main_window_set_has_select(self);
 }
 
-static void eom_main_window_on_add_clicked(GtkWidget *widget, gpointer user_data)
+/*static void eom_main_window_on_add_clicked(GtkWidget *widget, gpointer user_data)
 {
   EomMainWindow *self;
   gint count;
@@ -293,9 +269,9 @@ static void eom_main_window_on_add_clicked(GtkWidget *widget, gpointer user_data
 
     }
   }
-}
+  }*/
 
-static void eom_main_window_on_remove_clicked(GtkWidget *widget,
+ /*static void eom_main_window_on_remove_clicked(GtkWidget *widget,
                                             gpointer user_data)
 {
   EomMainWindow *self;
@@ -319,15 +295,32 @@ static void eom_main_window_on_remove_clicked(GtkWidget *widget,
                            COL_CURRENT, current_count - 1, -1);
     }
   }
-}
+  }*/
 
 static void eom_main_window_on_edit_clicked(GtkWidget *widget,
                                           gpointer user_data)
 {
-  EomMainWindow *self;
+  EomMainWindow *self = user_data;
+  GtkTreeModel *model;
+  gint id;
+  GtkWidget *window;
 
-  self = (EomMainWindow *)user_data;
+  if (gtk_tree_selection_get_selected(self->selection, &model, &self->iter)) {
+    gtk_tree_model_get(model, &self->iter, COL_ID, &id, -1);
+    window = interface_show_edit_window(id);
+    g_signal_connect(window, "delete-event",
+                     G_CALLBACK(eom_main_window_on_edit_closed), self);
 
-  /* TODO: Place more code here */
-  interface_show_edit_window();
+  }
+}
+
+static gboolean eom_main_window_on_edit_closed(GtkWidget *widget,
+                                           GdkEvent *event,
+                                           gpointer user_data)
+{
+  EomMainWindow *self = user_data;
+
+  eom_main_window_load(self);
+
+  return FALSE;
 }

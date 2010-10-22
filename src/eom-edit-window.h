@@ -2,6 +2,7 @@
 #define __EOM_EDIT_WINDOW_H__
 
 #include <hildon/hildon-stackable-window.h>
+#include "data.h"
 
 G_BEGIN_DECLS
 
@@ -43,11 +44,12 @@ struct _EomEditWindow
 {
   HildonStackableWindow parent;
 
-  GtkWidget *name_label;
+  GtkWidget *name_entry;
   GtkWidget *have_label;
-  GtkWidget *total_label;
+  GtkWidget *total_entry;
+  GtkWidget *volumes_box;
 
-  gint manga_id;
+  Manga *current_manga;
 };
 
 GType      eom_edit_window_get_type(void);

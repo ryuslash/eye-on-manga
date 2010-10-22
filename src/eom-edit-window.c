@@ -1,7 +1,9 @@
 #include "eom-edit-window.h"
 #include <hildon/hildon.h>
 #include <limits.h>
+#include <stdlib.h>
 #include "data.h"
+#include "eom-main-window.h"
 
 enum {
   EOM_EDIT_PROP_0,
@@ -9,13 +11,14 @@ enum {
 };
 
 static void eom_edit_window_set_manga_id(EomEditWindow *self,
-                                       gint manga_id);
+                                         gint manga_id);
+static void eom_edit_window_on_volume_toggled(GtkToggleButton *togglebutton,
+                                              gpointer user_data);
 
 G_DEFINE_TYPE(EomEditWindow, eom_edit_window, HILDON_TYPE_STACKABLE_WINDOW)
 
 GtkWidget *eom_edit_window_new(gint manga_id)
 {
-  g_print("1: %d\n", manga_id);
   return g_object_new(EOM_TYPE_EDIT_WINDOW, "manga-id", manga_id, NULL);
 }
 
@@ -25,11 +28,11 @@ static void eom_edit_window_set_property(GObject      *object,
                                          GParamSpec   *pspec)
 {
   EomEditWindow *self = EOM_EDIT_WINDOW(object);
+  gint manga_id = g_value_get_int(value);
 
   switch (property_id) {
   case EOM_EDIT_PROP_CID:
-    g_print("2: %d\n", g_value_get_int(value));
-    self->manga_id = g_value_get_int(value);
+    eom_edit_window_set_manga_id(self, manga_id);
     break;
   default:
     /* We don't have any other properties */
@@ -47,7 +50,7 @@ static void eom_edit_window_get_property(GObject    *object,
 
   switch (property_id) {
   case EOM_EDIT_PROP_CID:
-    g_value_set_int(value, self->manga_id);
+    g_value_set_int(value, self->current_manga->id);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -82,9 +85,6 @@ static void eom_edit_window_init(EomEditWindow *self)
   GtkWidget *nameclabel;
   GtkWidget *haveclabel;
   GtkWidget *totalclabel;
-  GtkWidget *vbox;
-
-  g_print("3: %d\n", self->manga_id);
 
   pannablearea = hildon_pannable_area_new();
   g_object_set(G_OBJECT(pannablearea),
@@ -101,9 +101,9 @@ static void eom_edit_window_init(EomEditWindow *self)
   gtk_table_attach(GTK_TABLE(table), nameclabel, 0, 1, 0, 1,
                    GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
 
-  self->name_label = gtk_label_new("");
-  gtk_misc_set_alignment(GTK_MISC(self->name_label), 1.0, 0.5);
-  gtk_table_attach(GTK_TABLE(table), self->name_label, 1, 2, 0, 1,
+  self->name_entry = hildon_entry_new(HILDON_SIZE_AUTO);
+  gtk_entry_set_alignment(GTK_ENTRY(self->name_entry), 1.0);
+  gtk_table_attach(GTK_TABLE(table), self->name_entry, 1, 2, 0, 1,
                    GTK_EXPAND | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
 
   haveclabel = gtk_label_new("You have:");
@@ -121,13 +121,13 @@ static void eom_edit_window_init(EomEditWindow *self)
   gtk_table_attach(GTK_TABLE(table), totalclabel, 0, 1, 2, 3,
                    GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
 
-  self->total_label = gtk_label_new("");
-  gtk_misc_set_alignment(GTK_MISC(self->total_label), 1.0, 0.5);
-  gtk_table_attach(GTK_TABLE(table), self->total_label, 1, 2, 2, 3,
+  self->total_entry = hildon_entry_new(HILDON_SIZE_AUTO);
+  gtk_entry_set_alignment(GTK_ENTRY(self->total_entry), 1.0);
+  gtk_table_attach(GTK_TABLE(table), self->total_entry, 1, 2, 2, 3,
                    GTK_EXPAND | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
 
-  vbox = gtk_vbox_new(TRUE, 0);
-  gtk_table_attach(GTK_TABLE(table), vbox, 0, 2, 3, 4,
+  self->volumes_box = gtk_vbox_new(TRUE, 0);
+  gtk_table_attach(GTK_TABLE(table), self->volumes_box, 0, 2, 3, 4,
                    GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 }
 
@@ -136,15 +136,77 @@ static void eom_edit_window_set_manga_id(EomEditWindow *self,
 {
   Manga *manga;
   gint *volumes;
+  gint num_vols;
+  gint i;
+  gint j = 0;
 
   manga = data_get_manga_by_id(manga_id);
-  volumes = data_get_volumes_by_manga_id(manga_id);
+  data_get_volumes_by_manga_id(manga_id, &num_vols, &volumes);
 
-  gtk_label_set_text(GTK_LABEL(self->name_label), manga->name);
+  self->current_manga = manga;
+
+  gtk_entry_set_text(GTK_ENTRY(self->name_entry), manga->name);
   gtk_label_set_text(GTK_LABEL(self->have_label),
                      g_strdup_printf("%d", manga->current_qty));
-  gtk_label_set_text(GTK_LABEL(self->total_label),
+  gtk_entry_set_text(GTK_ENTRY(self->total_entry),
                      g_strdup_printf("%d", manga->total_qty));
 
-  g_free(manga);
+  for (i = 0; i < manga->total_qty; i++) {
+    GtkWidget *button;
+
+    button = gtk_toggle_button_new_with_label(g_strdup_printf("%d", i + 1));
+    gtk_box_pack_start(GTK_BOX(self->volumes_box), button, TRUE, TRUE, 0);
+
+    g_print("volume found: %d, i=%d\n", volumes[j], i);
+    if (j < num_vols && volumes[j] == i+1) {
+      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+      j++;
+    }
+    g_signal_connect(button, "toggled",
+                     G_CALLBACK(eom_edit_window_on_volume_toggled),
+                     (gpointer)self);
+  }
+}
+
+static void eom_edit_window_on_volume_toggled(GtkToggleButton *togglebutton,
+                                              gpointer user_data)
+{
+  EomEditWindow *self;
+  gboolean       active;
+  gint           volume;
+
+
+  self = (EomEditWindow *)user_data;
+  active = gtk_toggle_button_get_active(togglebutton);
+  volume = atoi(gtk_button_get_label(GTK_BUTTON(togglebutton)));
+
+  g_print("toggled %d: %d\n", self->current_manga->id, volume);
+
+  if (active) {
+    if (!data_add_to_manga(self->current_manga->id, 1)) {
+      g_print("not added 1 volume to %d\n", self->current_manga->id);
+      return;
+    }
+    if (!data_add_volume_to_manga(self->current_manga->id, volume)) {
+      g_print("not added volume %d to %d\n", volume, self->current_manga->id);
+      data_add_to_manga(self->current_manga->id, 1);
+      return;
+    }
+    self->current_manga->current_qty++;
+  }
+  else {
+    if (!data_add_to_manga(self->current_manga->id, -1)) {
+      g_print("not added -1 volumes to %d\n", self->current_manga->id);
+      return;
+    }
+    if (!data_remove_volume_from_manga(self->current_manga->id, volume)) {
+      g_print("not added volume %d to %d\n", volume, self->current_manga->id);
+      data_add_to_manga(self->current_manga->id, 1); /* Undo */
+      return;
+    }
+    self->current_manga->current_qty--;
+  }
+
+  gtk_label_set_text(GTK_LABEL(self->have_label),
+                     g_strdup_printf("%d", self->current_manga->current_qty));
 }
