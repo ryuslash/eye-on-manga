@@ -1,10 +1,6 @@
 bin_PROGRAMS = eye-on-manga
 
-eye-on-manga_LDADD = $(HILDON_LIBS)
-
-eye-on-manga_CFLAGS = $(HILDON_CFLAGS)
-
-eye-on-manga_SOURCES = \
+eye_on_manga_SOURCES = \
 	data.c data.h \
 	eom.c eom.h \
 	eom-edit-window.c eom-edit-window.h \

@@ -1,4 +1,4 @@
 EXTRA_DIST = \
 	autogen.sh
 
-SUBDIRS = src data
+SUBDIRS = src
