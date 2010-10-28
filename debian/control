@@ -1,5 +1,5 @@
 Source: eye-on-manga
-Section: user/other
+Section: user/utilities
 Priority: optional
 Maintainer: Tom Willemsen <ryuslash@gmail.com>
 Build-Depends: debhelper (>= 5)
