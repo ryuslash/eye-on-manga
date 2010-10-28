@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=0.1
+Type=Application
+Name=Eye on Manga
+Exec=/usr/local/bin/eye-on-manga
+Icon=eye-on-manga
+X-Window-Icon=eye-on-manga
+X-Window-Icon-Dimmed=eye-on-manga
+X-Osso-Type=application/x-executable
