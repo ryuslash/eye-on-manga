@@ -1,0 +1,54 @@
+Source: eye-on-manga
+Section: user/other
+Priority: optional
+Maintainer: Tom Willemsen <ryuslash@gmail.com>
+Build-Depends: debhelper (>= 5)
+Standards-Version: 3.7.2
+
+Package: eye-on-manga
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: A manga collection application
+ Keep track of which manga volumes you have and which you still need to get.
+XB-Maemo-Icon-26:
+ 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
+ XBblNZsegQAAAABJRU5ErkJggg==
