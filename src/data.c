@@ -117,6 +117,7 @@ void data_get_volumes_by_manga_id(gint manga_id, gint *size, gint **vols)
       }
 
       sqlite3_finalize(statement);
+      volumes = (gint *)calloc(sizeof(gint), count);
 
       if (count > 0) {
         sql = g_strdup_printf(
