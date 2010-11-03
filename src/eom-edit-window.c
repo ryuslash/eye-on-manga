@@ -58,6 +58,15 @@ static void eom_edit_window_get_property(GObject    *object,
   }
 }
 
+static void eom_edit_window_finalize(GObject *object)
+{
+  EomEditWindow *self = EOM_EDIT_WINDOW(object);
+
+  g_free(self->current_manga);
+
+  G_OBJECT_CLASS(eom_edit_window_parent_class)->finalize(object);
+}
+
 static void eom_edit_window_class_init(EomEditWindowClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
@@ -65,6 +74,7 @@ static void eom_edit_window_class_init(EomEditWindowClass *klass)
 
   gobject_class->set_property = eom_edit_window_set_property;
   gobject_class->get_property = eom_edit_window_get_property;
+  gobject_class->finalize = eom_edit_window_finalize;
 
   pspec = g_param_spec_int("manga-id",
                            "ID of the manga",
@@ -157,7 +167,6 @@ static void eom_edit_window_set_manga_id(EomEditWindow *self,
     button = gtk_toggle_button_new_with_label(g_strdup_printf("%d", i + 1));
     gtk_box_pack_start(GTK_BOX(self->volumes_box), button, TRUE, TRUE, 0);
 
-    g_print("volume found: %d, i=%d\n", volumes[j], i);
     if (j < num_vols && volumes[j] == i+1) {
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
       j++;
@@ -180,15 +189,11 @@ static void eom_edit_window_on_volume_toggled(GtkToggleButton *togglebutton,
   active = gtk_toggle_button_get_active(togglebutton);
   volume = atoi(gtk_button_get_label(GTK_BUTTON(togglebutton)));
 
-  g_print("toggled %d: %d\n", self->current_manga->id, volume);
-
   if (active) {
     if (!data_add_to_manga(self->current_manga->id, 1)) {
-      g_print("not added 1 volume to %d\n", self->current_manga->id);
       return;
     }
     if (!data_add_volume_to_manga(self->current_manga->id, volume)) {
-      g_print("not added volume %d to %d\n", volume, self->current_manga->id);
       data_add_to_manga(self->current_manga->id, 1);
       return;
     }
@@ -196,11 +201,9 @@ static void eom_edit_window_on_volume_toggled(GtkToggleButton *togglebutton,
   }
   else {
     if (!data_add_to_manga(self->current_manga->id, -1)) {
-      g_print("not added -1 volumes to %d\n", self->current_manga->id);
       return;
     }
     if (!data_remove_volume_from_manga(self->current_manga->id, volume)) {
-      g_print("not added volume %d to %d\n", volume, self->current_manga->id);
       data_add_to_manga(self->current_manga->id, 1); /* Undo */
       return;
     }

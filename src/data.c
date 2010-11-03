@@ -45,6 +45,7 @@ GList *data_get_manga(void)
       }
       else
         g_print("error %d: %s\n", res, sqlite3_errmsg(database));
+
       /* Release the compiled statement from memory */
       sqlite3_finalize(statement);
     }
@@ -80,6 +81,7 @@ Manga *data_get_manga_by_id(gint manga_id)
           manga = data_get_manga_from_statement(statement);
         }
       }
+
       sqlite3_finalize(statement);
     }
     sqlite3_close(database);
@@ -107,31 +109,31 @@ void data_get_volumes_by_manga_id(gint manga_id, gint *size, gint **vols)
         " FROM   volume             "
         " WHERE  manga_id = %d ", manga_id);
 
-      g_print("%s\n", sql);
       res = sqlite3_prepare_v2(database, sql, strlen(sql), &statement, NULL);
       if (res == SQLITE_OK) {
         if (sqlite3_step(statement) == SQLITE_ROW) {
           count = sqlite3_column_int(statement, 0);
         }
       }
+
       sqlite3_finalize(statement);
-      g_print("%d: %d\n", manga_id, count);
 
       if (count > 0) {
         sql = g_strdup_printf(
           " SELECT id                 "
           " FROM   volume             "
           " WHERE  manga_id = %d ", manga_id);
-        g_print("%s\n", sql);
+
         res = sqlite3_prepare_v2(database, sql, strlen(sql), &statement, NULL);
         if (res == SQLITE_OK) {
           gint i = 0;
           while (sqlite3_step(statement) == SQLITE_ROW) {
             gint volume = sqlite3_column_int(statement, 0);
-            g_print("volume: %d\n", volume);
             volumes[i++] = volume;
           }
         }
+
+        sqlite3_finalize(statement);
       }
     }
     sqlite3_close(database);
@@ -166,6 +168,7 @@ gboolean data_add_manga(gchar *name, gint total_qty)
         if (sqlite3_step(statement) == SQLITE_DONE)
           result = TRUE;
       }
+
       sqlite3_finalize(statement);
     }
     sqlite3_close(database);
@@ -200,6 +203,7 @@ gboolean data_add_to_manga(gint manga_id, gint count)
         if (sqlite3_step(statement) == SQLITE_DONE)
           result = TRUE;
       }
+
       sqlite3_finalize(statement);
     }
     sqlite3_close(database);
@@ -238,6 +242,7 @@ gboolean data_add_volume_to_manga(gint manga_id, gint volume)
       }
       else
         g_print("res was not OK\n");
+
       sqlite3_finalize(statement);
     }
     else
@@ -279,6 +284,7 @@ gboolean data_remove_volume_from_manga(gint manga_id, gint volume)
           g_print("step did not return DONE\n");
       else
         g_print("result did not return OK\n");
+
       sqlite3_finalize(statement);
     }
     else

@@ -48,6 +48,9 @@ void eom_main_window_load(EomMainWindow *self)
     Manga *manga = list->data;
     eom_main_window_add_line(self, manga->id, manga->name,
                              manga->current_qty, manga->total_qty);
+
+    free(manga->name);
+    free(manga);
     list = g_list_next(list);
   }
 
