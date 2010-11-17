@@ -45,9 +45,6 @@ struct _EomMainWindow
 
   GtkTreeIter           iter;
   GtkListStore         *store;
-  GtkTreeSelection     *selection;
-
-  GtkWidget *edit_button;
 };
 
 GType      eom_main_window_get_type(void);
@@ -60,8 +57,6 @@ void       eom_main_window_add_line(EomMainWindow *window,
                                     const gchar *name,
                                     gint current_qty,
                                     gint total_qty);
-void       eom_main_window_set_no_select(EomMainWindow *self);
-void       eom_main_window_set_has_select(EomMainWindow *self);
 
 G_END_DECLS
 
