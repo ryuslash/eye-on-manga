@@ -1,2 +1,16 @@
 eye-on-manga
 debian/files
+*.o
+*.substvars
+Makefile
+Makefile.in
+*.m4
+build-stamp
+config.log
+config.status
+configure
+configure-stamp
+depcomp
+install-sh
+missing
+.deps
