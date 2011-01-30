@@ -39,6 +39,7 @@ GtkWidget *eom_main_window_new(void)
 void eom_main_window_load(EomMainWindow *self)
 {
   GList *list;
+  int i;
 
   gtk_list_store_clear(self->store);
 
@@ -50,6 +51,10 @@ void eom_main_window_load(EomMainWindow *self)
                              manga->current_qty, manga->total_qty);
 
     free(manga->name);
+    if (manga->volumes != NULL) {
+      for (i = 0; i < manga->vol_count; i++) 
+        free(manga->volumes + i);
+    }
     free(manga);
     list = g_list_next(list);
   }

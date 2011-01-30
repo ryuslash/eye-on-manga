@@ -14,6 +14,9 @@ static void eom_edit_window_set_manga_id(EomEditWindow *self,
                                          gint manga_id);
 static void eom_edit_window_on_volume_toggled(GtkToggleButton *togglebutton,
                                               gpointer user_data);
+static void
+eom_edit_window_on_volume_read_toggled(GtkToggleButton *togglebutton,
+                                       gpointer user_data);
 
 G_DEFINE_TYPE(EomEditWindow, eom_edit_window, HILDON_TYPE_STACKABLE_WINDOW)
 
@@ -106,31 +109,37 @@ static void eom_edit_window_init(EomEditWindow *self)
   hildon_pannable_area_add_with_viewport(HILDON_PANNABLE_AREA(pannablearea),
                                          table);
 
+  /* Label for the name field */
   nameclabel = gtk_label_new("Name:");
   gtk_misc_set_alignment(GTK_MISC(nameclabel), 0.0, 0.5);
   gtk_table_attach(GTK_TABLE(table), nameclabel, 0, 1, 0, 1,
                    GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
 
+  /* The name field */
   self->name_entry = hildon_entry_new(HILDON_SIZE_AUTO);
   gtk_entry_set_alignment(GTK_ENTRY(self->name_entry), 1.0);
   gtk_table_attach(GTK_TABLE(table), self->name_entry, 1, 2, 0, 1,
                    GTK_EXPAND | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
 
+  /* Label for the collected field */
   haveclabel = gtk_label_new("You have:");
   gtk_misc_set_alignment(GTK_MISC(haveclabel), 0.0, 0.5);
   gtk_table_attach(GTK_TABLE(table), haveclabel, 0, 1, 1, 2,
                    GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
 
+  /* The collected field */
   self->have_label = gtk_label_new("");
   gtk_misc_set_alignment(GTK_MISC(self->have_label), 1.0, 0.5);
   gtk_table_attach(GTK_TABLE(table), self->have_label, 1, 2, 1, 2,
                    GTK_EXPAND | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
 
+  /* Label for the total field */
   totalclabel = gtk_label_new("There are:");
   gtk_misc_set_alignment(GTK_MISC(totalclabel), 0.0, 0.5);
   gtk_table_attach(GTK_TABLE(table), totalclabel, 0, 1, 2, 3,
                    GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
 
+  /* The total field */
   self->total_entry = hildon_entry_new(HILDON_SIZE_AUTO);
   gtk_entry_set_alignment(GTK_ENTRY(self->total_entry), 1.0);
   gtk_table_attach(GTK_TABLE(table), self->total_entry, 1, 2, 2, 3,
@@ -141,17 +150,17 @@ static void eom_edit_window_init(EomEditWindow *self)
                    GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 }
 
-static void eom_edit_window_set_manga_id(EomEditWindow *self,
-                                         gint manga_id)
+static void eom_edit_window_set_manga_id(EomEditWindow *self, gint manga_id)
 {
   Manga *manga;
-  gint *volumes;
-  gint num_vols;
   gint i;
   gint j = 0;
+  GtkWidget *clabel;
+  GtkWidget *tlabel;
+  GtkWidget *buttonbox;
 
   manga = data_get_manga_by_id(manga_id);
-  data_get_volumes_by_manga_id(manga_id, &num_vols, &volumes);
+  data_get_volumes_for_manga(manga);
 
   self->current_manga = manga;
 
@@ -161,18 +170,35 @@ static void eom_edit_window_set_manga_id(EomEditWindow *self,
   gtk_entry_set_text(GTK_ENTRY(self->total_entry),
                      g_strdup_printf("%d", manga->total_qty));
 
+  /* TODO: Create labels for collected and read lists */
+
   for (i = 0; i < manga->total_qty; i++) {
     GtkWidget *button;
+    GtkWidget *read_button;
 
+    buttonbox = gtk_hbox_new(TRUE, 2);
+    gtk_box_pack_start(GTK_BOX(self->volumes_box), buttonbox, TRUE, TRUE, 0);
+
+    /* Button indicating collected state */
     button = gtk_toggle_button_new_with_label(g_strdup_printf("%d", i + 1));
-    gtk_box_pack_start(GTK_BOX(self->volumes_box), button, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(buttonbox), button, TRUE, TRUE, 0);
 
-    if (j < num_vols && volumes[j] == i+1) {
+    /* Button indicating read state */
+    read_button =
+      gtk_toggle_button_new_with_label(g_strdup_printf("%d", i + 1));
+    gtk_box_pack_start(GTK_BOX(buttonbox), read_button, TRUE, TRUE, 0);
+
+    if (j < manga->vol_count && manga->volumes[j].number == i+1) {
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+      if (manga->volumes[j].read)
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(read_button), TRUE);
       j++;
     }
     g_signal_connect(button, "toggled",
                      G_CALLBACK(eom_edit_window_on_volume_toggled),
+                     (gpointer)self);
+    g_signal_connect(read_button, "toggled",
+                     G_CALLBACK(eom_edit_window_on_volume_read_toggled),
                      (gpointer)self);
   }
 }
@@ -190,6 +216,7 @@ static void eom_edit_window_on_volume_toggled(GtkToggleButton *togglebutton,
   volume = atoi(gtk_button_get_label(GTK_BUTTON(togglebutton)));
 
   if (active) {
+    /* Add 1 to mangas collected */
     if (!data_add_to_manga(self->current_manga->id, 1)) {
       return;
     }
@@ -200,6 +227,7 @@ static void eom_edit_window_on_volume_toggled(GtkToggleButton *togglebutton,
     self->current_manga->current_qty++;
   }
   else {
+    /* Remove 1 from mangas collected */
     if (!data_add_to_manga(self->current_manga->id, -1)) {
       return;
     }
@@ -212,4 +240,20 @@ static void eom_edit_window_on_volume_toggled(GtkToggleButton *togglebutton,
 
   gtk_label_set_text(GTK_LABEL(self->have_label),
                      g_strdup_printf("%d", self->current_manga->current_qty));
+}
+
+static void
+eom_edit_window_on_volume_read_toggled(GtkToggleButton *togglebutton,
+                                       gpointer user_data)
+{
+  EomEditWindow *self;
+  gboolean       active;
+  gint           volume;
+
+  self = (EomEditWindow *)user_data;
+  active = gtk_toggle_button_get_active(togglebutton);
+  volume = atoi(gtk_button_get_label(GTK_BUTTON(togglebutton)));
+
+  if (!data_mark_volume_read(active, self->current_manga->id, volume))
+    g_print("coulnd't mark volume as read\n");
 }
