@@ -51,7 +51,7 @@ GType      eom_main_window_get_type(void);
 
 GtkWidget *eom_main_window_new(void);
 
-void       eom_main_window_load(EomMainWindow *self);
+void       eom_main_window_load(EomMainWindow *self, GList *manga);
 void       eom_main_window_add_line(EomMainWindow *window,
                                     gint id,
                                     const gchar *name,

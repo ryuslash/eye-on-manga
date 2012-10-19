@@ -24,6 +24,7 @@ struct _manga
 };
 
 GList    *data_get_manga(void);
+GList    *data_get_incomplete_manga(void);
 Manga    *data_get_manga_by_id(gint manga_id);
 void      data_get_volumes_for_manga(Manga *manga);
 gboolean  data_add_manga(gchar *name, gint total_qty);

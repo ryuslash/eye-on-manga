@@ -11,8 +11,36 @@
 static gboolean  data_check_and_create_database(gchar *data_file);
 static gint      data_create_new_database(const gchar *filename);
 static Manga    *data_get_manga_from_statement(sqlite3_stmt *stmt);
+static GList    *data_get_manga_for_query(const gchar *query);
 
 GList *data_get_manga(void)
+{
+  const char *sql =
+    " SELECT   id,          "
+    "          name,        "
+    "          current_qty, "
+    "          total_qty    "
+    " FROM     manga        "
+    " ORDER BY name         "
+    " COLLATE NOCASE        ";
+  return data_get_manga_for_query(sql);
+}
+
+GList *data_get_incomplete_manga(void)
+{
+  const char *sql =
+    " SELECT   id,			"
+    "          name,			"
+    "          current_qty,		"
+    "          total_qty 		"
+    " FROM     manga			"
+    " WHERE    current_qty != total_qty "
+    " ORDER BY name			"
+    " COLLATE NOCASE			";
+  return data_get_manga_for_query(sql);
+}
+
+GList *data_get_manga_for_query(const gchar *query)
 {
   sqlite3      *database;
   sqlite3_stmt *statement;
@@ -23,20 +51,11 @@ GList *data_get_manga(void)
 
   if (data_check_and_create_database(data_file)) {
     if (sqlite3_open(data_file, &database) == SQLITE_OK) {
-      int         res;
-      const char *sql =
-        " SELECT   id,          "
-        "          name,        "
-        "          current_qty, "
-        "          total_qty    "
-        " FROM     manga        "
-        " ORDER BY name         "
-        " COLLATE NOCASE        ";
+      int res = sqlite3_prepare_v2(database,
+				   query,
+				   strlen(query),
+				   &statement, NULL);
 
-      res = sqlite3_prepare_v2(database,
-                               sql,
-                               strlen(sql),
-                               &statement, NULL);
       if (res == SQLITE_OK) {
         while (sqlite3_step(statement) == SQLITE_ROW) {
           Manga *manga = data_get_manga_from_statement(statement);

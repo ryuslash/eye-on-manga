@@ -12,7 +12,7 @@ void interface_show_main_window(void)
   window = eom_main_window_new();
   gtk_widget_show_all(window);
 
-  eom_main_window_load(EOM_MAIN_WINDOW(window));
+  eom_main_window_load(EOM_MAIN_WINDOW(window), NULL);
 }
 
 GtkWidget *interface_show_edit_window(gint manga_id)

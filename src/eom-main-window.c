@@ -1,8 +1,11 @@
 #include "eom-main-window.h"
-#include <hildon/hildon.h>
-#include <gtk/gtk.h>
+
 #include <string.h>
 #include <stdlib.h>
+
+#include <hildon/hildon.h>
+#include <gtk/gtk.h>
+
 #include "eom-new-item-dialog.h"
 #include "data.h"
 #include "interface.h"
@@ -17,8 +20,14 @@ enum {
   NUM_COLS
 };
 
+struct filter_args {
+  EomMainWindow *window;
+  gint state;
+};
+
 static void eom_main_window_add_menu(EomMainWindow *window);
 static void eom_main_window_on_new(GtkWidget *widget, GtkWindow *window);
+static void eom_main_window_on_filter(GtkWidget *widget, struct filter_args *arg);
 static void eom_main_window_on_add_clicked(GtkWidget *widget,
                                            gpointer user_data);
 static void eom_main_window_on_remove_clicked(GtkWidget *widget,
@@ -36,14 +45,17 @@ GtkWidget *eom_main_window_new(void)
   return g_object_new(EOM_TYPE_MAIN_WINDOW, NULL);
 }
 
-void eom_main_window_load(EomMainWindow *self)
+void eom_main_window_load(EomMainWindow *self, GList *manga)
 {
   GList *list;
   int i;
 
   gtk_list_store_clear(self->store);
 
-  list = data_get_manga();
+  if (manga)
+    list = manga;
+  else
+    list = data_get_manga();
 
   while (list) {
     Manga *manga = list->data;
@@ -157,10 +169,17 @@ static void eom_main_window_init(EomMainWindow *window)
 
 static void eom_main_window_add_menu(EomMainWindow *window)
 {
-  GtkWidget *appmenu;
+  HildonAppMenu *appmenu;
   GtkWidget *new_button;
+  GtkWidget *all_filter, *collect_filter;
+  struct filter_args *args0 = malloc(sizeof(struct filter_args));
+  struct filter_args *args1 = malloc(sizeof(struct filter_args));
 
-  appmenu = hildon_app_menu_new();
+  args0->window = window;
+  args0->state = 0;
+  args1->window = window;
+  args1->state = 1;
+  appmenu = HILDON_APP_MENU(hildon_app_menu_new());
 
   new_button = hildon_gtk_button_new(HILDON_SIZE_AUTO);
   gtk_button_set_label(GTK_BUTTON(new_button), "New Manga");
@@ -169,11 +188,42 @@ static void eom_main_window_add_menu(EomMainWindow *window)
                          G_CALLBACK(eom_main_window_on_new),
                          GTK_WINDOW(window));
 
-  hildon_app_menu_append(HILDON_APP_MENU(appmenu), GTK_BUTTON(new_button));
-  gtk_widget_show_all(appmenu);
+  hildon_app_menu_append(appmenu, GTK_BUTTON(new_button));
+
+  all_filter = hildon_gtk_radio_button_new(HILDON_SIZE_AUTO, NULL);
+  gtk_button_set_label(GTK_BUTTON(all_filter), "All");
+  g_signal_connect_after(all_filter, "clicked",
+			 G_CALLBACK(eom_main_window_on_filter),
+			 args0);
+  hildon_app_menu_add_filter(appmenu, GTK_BUTTON(all_filter));
+  gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(all_filter), FALSE);
+
+  collect_filter =
+    hildon_gtk_radio_button_new_from_widget(HILDON_SIZE_AUTO,
+					    GTK_RADIO_BUTTON(all_filter));
+  gtk_button_set_label(GTK_BUTTON(collect_filter), "Collect");
+  g_signal_connect_after(collect_filter, "clicked",
+			 G_CALLBACK(eom_main_window_on_filter),
+			 args1);
+  hildon_app_menu_add_filter(appmenu, GTK_BUTTON(collect_filter));
+  gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(collect_filter), FALSE);
+
+  gtk_widget_show_all(GTK_WIDGET(appmenu));
 
   hildon_stackable_window_set_main_menu(HILDON_STACKABLE_WINDOW(window),
                                         HILDON_APP_MENU(appmenu));
+}
+
+static void eom_main_window_on_filter(GtkWidget *widget, struct filter_args *arg)
+{
+  GList *manga;
+
+  if (arg->state)
+    manga = data_get_incomplete_manga();
+  else
+    manga = data_get_manga();
+
+  eom_main_window_load(arg->window, manga);
 }
 
 static void eom_main_window_on_new(GtkWidget *widget, GtkWindow *window)
@@ -202,7 +252,7 @@ static void eom_main_window_on_new(GtkWidget *widget, GtkWindow *window)
 
   if (name != NULL) {
     if (data_add_manga(name, total_qty))
-      eom_main_window_load(EOM_MAIN_WINDOW(window));
+      eom_main_window_load(EOM_MAIN_WINDOW(window), NULL);
   }
 }
 
@@ -212,7 +262,7 @@ static gboolean eom_main_window_on_edit_closed(GtkWidget *widget,
 {
   EomMainWindow *self = user_data;
 
-  eom_main_window_load(self);
+  eom_main_window_load(self, NULL);
 
   return FALSE;
 }
