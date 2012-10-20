@@ -15,4 +15,5 @@ something for.
 ## Versioning
 
 Eye on Manga uses [Semantic Versioning](http://semver.org/), read it
-if you would like to know.
+if you would like to know more about it.  In short, it means the
+version tries to mean something.
