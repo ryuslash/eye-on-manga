@@ -1,5 +1,5 @@
 AC_INIT(Makefile.am)
-AM_INIT_AUTOMAKE(eye-on-manga, 0.0.1)
+AM_INIT_AUTOMAKE(eye-on-manga, 0.1.0)
 
 AC_PROG_CC
 AC_PROG_INSTALL

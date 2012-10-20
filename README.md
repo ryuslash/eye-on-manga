@@ -11,3 +11,8 @@ like walking around with pieces of paper in my wallet either.  I have
 this phone that allows me to write software for it, I'm a developer
 and I have a great interest in C programming, sounds perfect to write
 something for.
+
+## Versioning
+
+Eye on Manga uses [Semantic Versioning](http://semver.org/), read it
+if you would like to know.
