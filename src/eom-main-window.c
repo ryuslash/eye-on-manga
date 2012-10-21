@@ -42,18 +42,20 @@ static void eom_main_window_on_row_activated(GtkWidget *treeview,
 
 GtkWidget *eom_main_window_new(void)
 {
-  return g_object_new(EOM_TYPE_MAIN_WINDOW, NULL);
+  return g_object_new(EOM_TYPE_MAIN_WINDOW,
+                      "state", 0,
+                      NULL);
 }
 
-void eom_main_window_load(EomMainWindow *self, GList *manga)
+void eom_main_window_load(EomMainWindow *self)
 {
   GList *list;
   int i;
 
   gtk_list_store_clear(self->store);
 
-  if (manga)
-    list = manga;
+  if (self->state)
+    list = data_get_incomplete_manga();
   else
     list = data_get_manga();
 
@@ -216,14 +218,8 @@ static void eom_main_window_add_menu(EomMainWindow *window)
 
 static void eom_main_window_on_filter(GtkWidget *widget, struct filter_args *arg)
 {
-  GList *manga;
-
-  if (arg->state)
-    manga = data_get_incomplete_manga();
-  else
-    manga = data_get_manga();
-
-  eom_main_window_load(arg->window, manga);
+  arg->window->state = arg->state;
+  eom_main_window_load(arg->window);
 }
 
 static void eom_main_window_on_new(GtkWidget *widget, GtkWindow *window)
@@ -252,7 +248,7 @@ static void eom_main_window_on_new(GtkWidget *widget, GtkWindow *window)
 
   if (name != NULL) {
     if (data_add_manga(name, total_qty))
-      eom_main_window_load(EOM_MAIN_WINDOW(window), NULL);
+      eom_main_window_load(EOM_MAIN_WINDOW(window));
   }
 }
 
@@ -262,7 +258,7 @@ static gboolean eom_main_window_on_edit_closed(GtkWidget *widget,
 {
   EomMainWindow *self = user_data;
 
-  eom_main_window_load(self, NULL);
+  eom_main_window_load(self);
 
   return FALSE;
 }
