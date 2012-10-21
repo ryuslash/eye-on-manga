@@ -3,34 +3,30 @@
 
 #include <gtk/gtk.h>
 
-typedef struct _volume Volume;
-
-struct _volume
+typedef struct
 {
-  int number;
-  int read;
-};
+    int number;
+    int read;
+} Volume;
 
-typedef struct _manga Manga;
-
-struct _manga
+typedef struct
 {
-  int     id;
-  int     current_qty;
-  int     total_qty;
-  char   *name;
-  int     vol_count;
-  Volume *volumes;
-};
+    int id;
+    int current_qty;
+    int total_qty;
+    char *name;
+    int vol_count;
+    Volume *volumes;
+} Manga;
 
-GList    *data_get_manga(void);
-GList    *data_get_incomplete_manga(void);
-Manga    *data_get_manga_by_id(gint manga_id);
-void      data_get_volumes_for_manga(Manga *manga);
-gboolean  data_add_manga(gchar *name, gint total_qty);
-gboolean  data_add_to_manga(gint id, gint count);
-gboolean  data_add_volume_to_manga(gint manga_id, gint volume);
-gboolean  data_mark_volume_read(gint read, gint manga_id, gint volume);
-gboolean  data_remove_volume_from_manga(gint manga_id, gint volume);
+gboolean data_add_manga(gchar*, gint);
+gboolean data_add_to_manga(gint, gint);
+gboolean data_add_volume_to_manga(gint, gint);
+GList *data_get_incomplete_manga(void);
+GList *data_get_manga(void);
+Manga *data_get_manga_by_id(gint);
+void data_get_volumes_for_manga(Manga*);
+gboolean data_mark_volume_read(gint, gint, gint);
+gboolean data_remove_volume_from_manga(gint, gint);
 
 #endif /* __DATA_H__ */

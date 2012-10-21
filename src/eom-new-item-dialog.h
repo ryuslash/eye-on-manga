@@ -31,29 +31,23 @@ G_BEGIN_DECLS
                               EOM_TYPE_NEW_ITEM_DIALOG, \
                               EomNewItemDialogClass))
 
-typedef struct _EomNewItemDialog      EomNewItemDialog;
-typedef struct _EomNewItemDialogClass EomNewItemDialogClass;
-
-struct _EomNewItemDialogClass
+typedef struct
 {
   GtkDialogClass parent_class;
-};
+} EomNewItemDialogClass;
 
-struct _EomNewItemDialog
+typedef struct
 {
   GtkDialog  parent;
 
   GtkWidget *name_entry;
   GtkWidget *qty_entry;
-};
+} EomNewItemDialog;
 
-GType        eom_new_item_dialog_get_type(void);
-
-GtkWidget   *eom_new_item_dialog_new(void);
-
-const gchar *eom_new_item_dialog_get_name(EomNewItemDialog *dialog);
-
-gint         eom_new_item_dialog_get_total_qty(EomNewItemDialog *dialog);
+const gchar *eom_new_item_dialog_get_name(EomNewItemDialog*);
+gint eom_new_item_dialog_get_total_qty(EomNewItemDialog*);
+GType eom_new_item_dialog_get_type(void);
+GtkWidget *eom_new_item_dialog_new(void);
 
 G_END_DECLS
 
