@@ -2,16 +2,20 @@
 
 #include <hildon/hildon.h>
 #include <limits.h>
+#include <math.h>
 #include <stdlib.h>
 
 #include "data.h"
 #include "eom-main-window.h"
+
+#define COLUMNS 8
 
 enum {
   EOM_EDIT_PROP_0,
   EOM_EDIT_PROP_CID
 };
 
+static GtkWidget *create_volume_button(gchar*, GtkTable*, int, int);
 static void eom_edit_window_class_init(EomEditWindowClass*);
 static void eom_edit_window_init(EomEditWindow *self);
 static void finalize(GObject*);
@@ -29,6 +33,24 @@ eom_edit_window_new(gint manga_id)
     return g_object_new(EOM_TYPE_EDIT_WINDOW,
                         "manga-id", manga_id,
                         NULL);
+}
+
+static GtkWidget *
+create_volume_button(gchar* text, GtkTable* table, int column, int row)
+{
+    GtkWidget *btn;
+
+    btn = hildon_gtk_toggle_button_new(HILDON_SIZE_THUMB_HEIGHT
+                                       | HILDON_SIZE_AUTO_WIDTH);
+    gtk_button_set_label(GTK_BUTTON(btn), text);
+    gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(btn), FALSE);
+    gtk_table_attach(GTK_TABLE(table), btn,
+                     column, column + 1,
+                     row, row + 1,
+                     GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL,
+                     0, 0);
+
+    return btn;
 }
 
 static void
@@ -103,7 +125,7 @@ eom_edit_window_init(EomEditWindow *self)
     gtk_table_attach(GTK_TABLE(table), self->total_entry, 1, 2, 2, 3,
                      GTK_EXPAND | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
 
-    self->volsbox = gtk_vbox_new(TRUE, 0);
+    self->volsbox = gtk_vbox_new(FALSE, 0);
     gtk_table_attach(GTK_TABLE(table), self->volsbox, 0, 2, 3, 4,
                      GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
 }
@@ -186,18 +208,15 @@ static void
 set_manga_id(EomEditWindow *self, gint manga_id)
 {
     GtkWidget *bbox;
-    GtkWidget *clabel;
-    GtkWidget *tlabel;
+    GtkWidget *clabel, *rlabel;
+    GtkWidget *ctable, *rtable;
     Manga *manga;
     gchar *txt;
-    gint i;
-    gint j = 0;
+    gint i, j = 0, row = 0, col = 0;
 
     manga = data_get_manga_by_id(manga_id);
     data_get_volumes_for_manga(manga);
-
     self->manga = manga;
-
     gtk_entry_set_text(GTK_ENTRY(self->name_entry), manga->name);
 
     txt = g_strdup_printf("%d", manga->current_qty);
@@ -208,27 +227,37 @@ set_manga_id(EomEditWindow *self, gint manga_id)
     gtk_entry_set_text(GTK_ENTRY(self->total_entry), txt);
     g_free(txt);
 
-    /* TODO: Create labels for collected and read lists */
+    clabel = gtk_label_new("Collected:");
+    gtk_misc_set_alignment(GTK_MISC(clabel), 0.0, 0.5);
+    gtk_box_pack_start(GTK_BOX(self->volsbox), clabel, FALSE, FALSE, 0);
+
+    ctable = gtk_table_new((int)floor(manga->total_qty / COLUMNS),
+                           COLUMNS, TRUE);
+    gtk_box_pack_start(GTK_BOX(self->volsbox), ctable, TRUE, TRUE, 0);
+
+    rlabel = gtk_label_new("Read:");
+    gtk_misc_set_alignment(GTK_MISC(rlabel), 0.0, 0.5);
+    gtk_box_pack_start(GTK_BOX(self->volsbox), rlabel, FALSE, FALSE, 0);
+
+    rtable = gtk_table_new((int)floor(manga->total_qty / COLUMNS),
+                           COLUMNS, TRUE);
+    gtk_box_pack_start(GTK_BOX(self->volsbox), rtable, TRUE, TRUE, 0);
 
     for (i = 0; i < manga->total_qty; i++) {
-        GtkWidget *btn;
-        GtkWidget *rbtn;
+        GtkWidget *cbtn, *rbtn;
 
-        bbox = gtk_hbox_new(TRUE, 2);
-        gtk_box_pack_start(GTK_BOX(self->volsbox), bbox, TRUE, TRUE, 0);
+        if (i > 0 && i % COLUMNS == 0) {
+            row++;
+            col = 0;
+        }
 
-        /* Button indicating collected state */
         txt = g_strdup_printf("%d", i + 1);
-        btn = gtk_toggle_button_new_with_label(txt);
-        gtk_box_pack_start(GTK_BOX(bbox), btn, TRUE, TRUE, 0);
 
-        /* Button indicating read state */
-        rbtn = gtk_toggle_button_new_with_label(txt);
-        gtk_box_pack_start(GTK_BOX(bbox), rbtn, TRUE, TRUE, 0);
-        g_free(txt);
+        cbtn = create_volume_button(txt, GTK_TABLE(ctable), col, row);
+        rbtn = create_volume_button(txt, GTK_TABLE(rtable), col, row);
 
         if (j < manga->vol_count && manga->volumes[j].number == i + 1) {
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(btn), TRUE);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(cbtn), TRUE);
 
             if (manga->volumes[j].read)
                 gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(rbtn),
@@ -237,11 +266,14 @@ set_manga_id(EomEditWindow *self, gint manga_id)
             j++;
         }
 
-        g_signal_connect(btn, "toggled", G_CALLBACK(on_volume_toggled),
+        g_signal_connect(cbtn, "toggled", G_CALLBACK(on_volume_toggled),
                          (gpointer)self);
         g_signal_connect(rbtn, "toggled",
                          G_CALLBACK(on_volume_read_toggled),
                          (gpointer)self);
+
+        g_free(txt);
+        col++;
     }
 }
 
