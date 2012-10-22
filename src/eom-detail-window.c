@@ -75,10 +75,6 @@ static void
 eom_detail_window_init(EomDetailWindow *self)
 {
     GtkWidget *panarea;
-    GtkWidget *table;
-    GtkWidget *nameclabel;
-    GtkWidget *haveclabel;
-    GtkWidget *totalclabel;
 
     panarea = hildon_pannable_area_new();
     g_object_set(G_OBJECT(panarea),
@@ -86,49 +82,10 @@ eom_detail_window_init(EomDetailWindow *self)
                  NULL);
     gtk_container_add(GTK_CONTAINER(self), panarea);
 
-    table = gtk_table_new(4, 2, FALSE);
-    hildon_pannable_area_add_with_viewport(HILDON_PANNABLE_AREA(panarea),
-                                           table);
-
-    /* Label for the name field */
-    nameclabel = gtk_label_new("Name:");
-    gtk_misc_set_alignment(GTK_MISC(nameclabel), 0.0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), nameclabel, 0, 1, 0, 1,
-                     GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
-
-    /* The name field */
-    self->name_entry = hildon_entry_new(HILDON_SIZE_AUTO);
-    gtk_entry_set_alignment(GTK_ENTRY(self->name_entry), 1.0);
-    gtk_table_attach(GTK_TABLE(table), self->name_entry, 1, 2, 0, 1,
-                     GTK_EXPAND | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
-
-    /* Label for the collected field */
-    haveclabel = gtk_label_new("You have:");
-    gtk_misc_set_alignment(GTK_MISC(haveclabel), 0.0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), haveclabel, 0, 1, 1, 2,
-                     GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
-
-    /* The collected field */
-    self->have_label = gtk_label_new("");
-    gtk_misc_set_alignment(GTK_MISC(self->have_label), 1.0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), self->have_label, 1, 2, 1, 2,
-                     GTK_EXPAND | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
-
-    /* Label for the total field */
-    totalclabel = gtk_label_new("There are:");
-    gtk_misc_set_alignment(GTK_MISC(totalclabel), 0.0, 0.5);
-    gtk_table_attach(GTK_TABLE(table), totalclabel, 0, 1, 2, 3,
-                     GTK_SHRINK | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
-
-    /* The total field */
-    self->total_entry = hildon_entry_new(HILDON_SIZE_AUTO);
-    gtk_entry_set_alignment(GTK_ENTRY(self->total_entry), 1.0);
-    gtk_table_attach(GTK_TABLE(table), self->total_entry, 1, 2, 2, 3,
-                     GTK_EXPAND | GTK_FILL, GTK_SHRINK | GTK_FILL, 0, 0);
-
     self->volsbox = gtk_vbox_new(FALSE, 0);
-    gtk_table_attach(GTK_TABLE(table), self->volsbox, 0, 2, 3, 4,
-                     GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    hildon_pannable_area_add_with_viewport(HILDON_PANNABLE_AREA(panarea),
+                                           self->volsbox);
+
 }
 
 static void
@@ -199,10 +156,6 @@ on_volume_toggled(GtkToggleButton *togglebutton, gpointer user_data)
         }
         self->manga->current_qty--;
     }
-
-    txt = g_strdup_printf("%d", self->manga->current_qty);
-    gtk_label_set_text(GTK_LABEL(self->have_label), txt);
-    g_free(txt);
 }
 
 static void
@@ -212,7 +165,6 @@ set_manga_id(EomDetailWindow *self, gint manga_id)
     GtkWidget *clabel, *rlabel;
     GtkWidget *ctable, *rtable;
     Manga *manga;
-    gchar *txt;
     gint i, j = 0, row = 0, col = 0;
 
     manga = data_get_manga_by_id(manga_id);
@@ -220,15 +172,6 @@ set_manga_id(EomDetailWindow *self, gint manga_id)
     self->manga = manga;
 
     gtk_window_set_title(GTK_WINDOW(self), manga->name);
-    gtk_entry_set_text(GTK_ENTRY(self->name_entry), manga->name);
-
-    txt = g_strdup_printf("%d", manga->current_qty);
-    gtk_label_set_text(GTK_LABEL(self->have_label), txt);
-    g_free(txt);
-
-    txt = g_strdup_printf("%d", manga->total_qty);
-    gtk_entry_set_text(GTK_ENTRY(self->total_entry), txt);
-    g_free(txt);
 
     clabel = gtk_label_new("Collected:");
     gtk_misc_set_alignment(GTK_MISC(clabel), 0.0, 0.5);
@@ -248,6 +191,7 @@ set_manga_id(EomDetailWindow *self, gint manga_id)
 
     for (i = 0; i < manga->total_qty; i++) {
         GtkWidget *cbtn, *rbtn;
+        gchar *txt;
 
         if (i > 0 && i % COLUMNS == 0) {
             row++;

@@ -41,12 +41,7 @@ typedef struct
 typedef struct
 {
     HildonStackableWindow parent;
-
-    GtkWidget *name_entry;
-    GtkWidget *have_label;
-    GtkWidget *total_entry;
     GtkWidget *volsbox;
-
     Manga *manga;
 } EomDetailWindow;
 
