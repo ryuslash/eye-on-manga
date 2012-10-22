@@ -217,6 +217,8 @@ set_manga_id(EomEditWindow *self, gint manga_id)
     manga = data_get_manga_by_id(manga_id);
     data_get_volumes_for_manga(manga);
     self->manga = manga;
+
+    gtk_window_set_title(GTK_WINDOW(self), manga->name);
     gtk_entry_set_text(GTK_ENTRY(self->name_entry), manga->name);
 
     txt = g_strdup_printf("%d", manga->current_qty);
