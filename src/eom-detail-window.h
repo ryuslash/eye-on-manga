@@ -1,5 +1,5 @@
-#ifndef __EOM_EDIT_WINDOW_H__
-#define __EOM_EDIT_WINDOW_H__
+#ifndef __EOM_DETAIL_WINDOW_H__
+#define __EOM_DETAIL_WINDOW_H__
 
 #include <hildon/hildon-stackable-window.h>
 
@@ -8,17 +8,17 @@
 G_BEGIN_DECLS
 
 #define EOM_TYPE_EDIT_WINDOW                    \
-    (eom_edit_window_get_type())
+    (eom_detail_window_get_type())
 
-#define EOM_EDIT_WINDOW(obj)                            \
+#define EOM_DETAIL_WINDOW(obj)                          \
     (G_TYPE_CHECK_INSTANCE_CAST ((obj),                 \
                                  EOM_TYPE_EDIT_WINDOW,  \
-                                 EomEditWindow))
+                                 EomDetailWindow))
 
-#define EOM_EDIT_WINDOW_CLASS(klass)                \
+#define EOM_DETAIL_WINDOW_CLASS(klass)              \
     (G_TYPE_CHECK_CLASS_CAST ((klass),              \
                               EOM_TYPE_EDIT_WINDOW, \
-                              EomEditWindowClass))
+                              EomDetailWindowClass))
 
 #define EOM_IS_EDIT_WINDOW(obj)                         \
     (G_TYPE_CHECK_INSTANCE_TYPE ((obj),                 \
@@ -28,15 +28,15 @@ G_BEGIN_DECLS
     (G_TYPE_CHECK_CLASS_TYPE ((klass),                  \
                               EOM_TYPE_EDIT_WINDOW))
 
-#define EOM_EDIT_WINDOW_GET_CLASS(obj)                  \
+#define EOM_DETAIL_WINDOW_GET_CLASS(obj)                \
     (G_TYPE_INSTANCE_GET_CLASS ((obj),                  \
                                 EOM_TYPE_EDIT_WINDOW,   \
-                                EomEditWindowClass))
+                                EomDetailWindowClass))
 
 typedef struct
 {
     HildonStackableWindowClass parent_class;
-} EomEditWindowClass;
+} EomDetailWindowClass;
 
 typedef struct
 {
@@ -48,11 +48,11 @@ typedef struct
     GtkWidget *volsbox;
 
     Manga *manga;
-} EomEditWindow;
+} EomDetailWindow;
 
-GType eom_edit_window_get_type(void);
-GtkWidget *eom_edit_window_new(gint);
+GType eom_detail_window_get_type(void);
+GtkWidget *eom_detail_window_new(gint);
 
 G_END_DECLS
 
-#endif /* __EOM_EDIT_WINDOW_H__ */
+#endif /* __EOM_DETAIL_WINDOW_H__ */

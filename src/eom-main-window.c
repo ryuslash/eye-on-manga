@@ -274,7 +274,7 @@ on_row_activated(GtkWidget *treeview, GtkTreePath *path,
         return;
 
     gtk_tree_model_get(model, &iter, COL_ID, &id, -1);
-    window = interface_show_edit_window(id);
+    window = interface_show_detail_window(id);
     g_signal_connect(window, "delete-event", G_CALLBACK(on_edit_closed),
                      self);
 }

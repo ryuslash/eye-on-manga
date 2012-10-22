@@ -1,4 +1,4 @@
-#include "eom-edit-window.h"
+#include "eom-detail-window.h"
 
 #include <hildon/hildon.h>
 #include <limits.h>
@@ -16,19 +16,20 @@ enum {
 };
 
 static GtkWidget *create_volume_button(gchar*, GtkTable*, int, int);
-static void eom_edit_window_class_init(EomEditWindowClass*);
-static void eom_edit_window_init(EomEditWindow *self);
+static void eom_detail_window_class_init(EomDetailWindowClass*);
+static void eom_detail_window_init(EomDetailWindow *self);
 static void finalize(GObject*);
 static void get_property(GObject*, guint, GValue*, GParamSpec*);
 static void on_volume_read_toggled(GtkToggleButton*, gpointer);
 static void on_volume_toggled(GtkToggleButton*, gpointer);
-static void set_manga_id(EomEditWindow*, gint);
+static void set_manga_id(EomDetailWindow*, gint);
 static void set_property(GObject*, guint, const GValue*, GParamSpec*);
 
-G_DEFINE_TYPE(EomEditWindow, eom_edit_window, HILDON_TYPE_STACKABLE_WINDOW)
+G_DEFINE_TYPE(EomDetailWindow, eom_detail_window,
+              HILDON_TYPE_STACKABLE_WINDOW)
 
 GtkWidget *
-eom_edit_window_new(gint manga_id)
+eom_detail_window_new(gint manga_id)
 {
     return g_object_new(EOM_TYPE_EDIT_WINDOW,
                         "manga-id", manga_id,
@@ -54,7 +55,7 @@ create_volume_button(gchar* text, GtkTable* table, int column, int row)
 }
 
 static void
-eom_edit_window_class_init(EomEditWindowClass *klass)
+eom_detail_window_class_init(EomDetailWindowClass *klass)
 {
     GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
     GParamSpec   *pspec;
@@ -71,7 +72,7 @@ eom_edit_window_class_init(EomEditWindowClass *klass)
 }
 
 static void
-eom_edit_window_init(EomEditWindow *self)
+eom_detail_window_init(EomDetailWindow *self)
 {
     GtkWidget *panarea;
     GtkWidget *table;
@@ -133,18 +134,18 @@ eom_edit_window_init(EomEditWindow *self)
 static void
 finalize(GObject *object)
 {
-    EomEditWindow *self = EOM_EDIT_WINDOW(object);
+    EomDetailWindow *self = EOM_DETAIL_WINDOW(object);
 
     g_free(self->manga);
 
-    G_OBJECT_CLASS(eom_edit_window_parent_class)->finalize(object);
+    G_OBJECT_CLASS(eom_detail_window_parent_class)->finalize(object);
 }
 
 static void
 get_property(GObject *object, guint property_id, GValue *value,
              GParamSpec *pspec)
 {
-    EomEditWindow *self = EOM_EDIT_WINDOW(object);
+    EomDetailWindow *self = EOM_DETAIL_WINDOW(object);
 
     switch (property_id) {
     case EOM_EDIT_PROP_CID:
@@ -159,7 +160,7 @@ get_property(GObject *object, guint property_id, GValue *value,
 static void
 on_volume_read_toggled(GtkToggleButton *togglebutton, gpointer user_data)
 {
-    EomEditWindow *self = (EomEditWindow *)user_data;
+    EomDetailWindow *self = (EomDetailWindow *)user_data;
     gboolean active = gtk_toggle_button_get_active(togglebutton);
     gint volume = atoi(gtk_button_get_label(GTK_BUTTON(togglebutton)));
 
@@ -170,7 +171,7 @@ on_volume_read_toggled(GtkToggleButton *togglebutton, gpointer user_data)
 static void
 on_volume_toggled(GtkToggleButton *togglebutton, gpointer user_data)
 {
-    EomEditWindow *self = (EomEditWindow *)user_data;
+    EomDetailWindow *self = (EomDetailWindow *)user_data;
     gboolean active = gtk_toggle_button_get_active(togglebutton);
     gint volume = atoi(gtk_button_get_label(GTK_BUTTON(togglebutton)));
     gchar *txt;
@@ -205,7 +206,7 @@ on_volume_toggled(GtkToggleButton *togglebutton, gpointer user_data)
 }
 
 static void
-set_manga_id(EomEditWindow *self, gint manga_id)
+set_manga_id(EomDetailWindow *self, gint manga_id)
 {
     GtkWidget *bbox;
     GtkWidget *clabel, *rlabel;
@@ -283,7 +284,7 @@ static void
 set_property(GObject *object, guint property_id, const GValue *value,
              GParamSpec *pspec)
 {
-    EomEditWindow *self = EOM_EDIT_WINDOW(object);
+    EomDetailWindow *self = EOM_DETAIL_WINDOW(object);
     gint manga_id = g_value_get_int(value);
 
     switch (property_id) {
