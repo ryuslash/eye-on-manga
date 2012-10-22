@@ -17,13 +17,9 @@ void interface_show_main_window(void)
 
 GtkWidget *interface_show_edit_window(gint manga_id)
 {
-  /*HildonWindowStack *stack;*/
   GtkWidget *window;
 
-  /*-stack = hildon_window_stack_get_default();*/
-
   window = eom_edit_window_new(manga_id);
-  /*hildon_window_stack_push(stack, HILDON_STACKABLE_WINDOW(window), NULL);*/
   gtk_widget_show_all(window);
 
   return window;
