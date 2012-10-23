@@ -233,29 +233,23 @@ on_new(GtkWidget *widget, GtkWindow *window)
 {
     GtkWidget *dialog;
     gint result;
-    gchar *name = NULL;
+    const gchar *name = NULL;
     gint total_qty;
 
     dialog = interface_show_new_item_dialog(window);
     result = gtk_dialog_run(GTK_DIALOG(dialog));
 
     if (result == GTK_RESPONSE_OK) {
-        const gchar *tmp;
-        tmp = eom_new_item_dialog_get_name(EOM_NEW_ITEM_DIALOG(dialog));
-        name = (gchar *)malloc(strlen(tmp) + 1);
-
-        strcpy(name, tmp);
-        strcat(name, "\0");
-
+        name = eom_new_item_dialog_get_name(EOM_NEW_ITEM_DIALOG(dialog));
         total_qty = eom_new_item_dialog_get_total_qty(EOM_NEW_ITEM_DIALOG(dialog));
-
-        gtk_widget_destroy(dialog);
     }
 
     if (name != NULL) {
         if (data_add_manga(name, total_qty))
             eom_main_window_load(EOM_MAIN_WINDOW(window));
     }
+
+    gtk_widget_destroy(dialog);
 }
 
 static void

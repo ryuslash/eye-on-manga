@@ -42,10 +42,13 @@ typedef struct
 {
     HildonStackableWindow parent;
     GtkWidget *volsbox;
+    GtkWidget *ctable;
+    GtkWidget *rtable;
     Manga *manga;
 } EomDetailWindow;
 
 GType eom_detail_window_get_type(void);
+void eom_detail_window_load(EomDetailWindow*);
 GtkWidget *eom_detail_window_new(gint);
 
 G_END_DECLS

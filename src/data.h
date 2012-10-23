@@ -19,7 +19,7 @@ typedef struct
     Volume *volumes;
 } Manga;
 
-gboolean data_add_manga(gchar*, gint);
+gboolean data_add_manga(const gchar*, gint);
 gboolean data_add_to_manga(gint, gint);
 gboolean data_add_volume_to_manga(gint, gint);
 GList *data_get_incomplete_manga(void);
@@ -28,5 +28,6 @@ Manga *data_get_manga_by_id(gint);
 void data_get_volumes_for_manga(Manga*);
 gboolean data_mark_volume_read(gint, gint, gint);
 gboolean data_remove_volume_from_manga(gint, gint);
+gboolean data_update_manga(gint, const gchar*, gint);
 
 #endif /* __DATA_H__ */

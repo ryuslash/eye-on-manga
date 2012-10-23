@@ -17,7 +17,7 @@ static GList *get_manga_for_query(const gchar*);
 static Manga *get_manga_from_statement(sqlite3_stmt*);
 
 gboolean
-data_add_manga(gchar *name, gint total_qty)
+data_add_manga(const gchar *name, gint total_qty)
 {
     gchar *sql =
         g_strdup_printf(" INSERT INTO manga (name, current_qty, "
@@ -210,6 +210,19 @@ data_remove_volume_from_manga(gint manga_id, gint volume)
     char *sql = g_strdup_printf(" DELETE FROM volume "
                                 " WHERE manga_id = %d "
                                 " AND id = %d ", manga_id, volume);
+    gboolean ret = execute_non_query(sql);
+
+    g_free(sql);
+
+    return ret;
+}
+
+gboolean
+data_update_manga(gint manga_id, const gchar *name, gint total_qty)
+{
+    gchar *sql =
+        g_strdup_printf("UPDATE manga SET name = '%s', total_qty = %d "
+                        "WHERE id = %d", name, total_qty, manga_id);
     gboolean ret = execute_non_query(sql);
 
     g_free(sql);

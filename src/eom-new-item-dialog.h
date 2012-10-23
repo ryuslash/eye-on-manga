@@ -3,6 +3,8 @@
 
 #include <gtk/gtkdialog.h>
 
+#include "data.h"
+
 G_BEGIN_DECLS
 
 #define EOM_TYPE_NEW_ITEM_DIALOG                \
@@ -42,6 +44,8 @@ typedef struct
 
   GtkWidget *name_entry;
   GtkWidget *qty_entry;
+
+  Manga *manga;
 } EomNewItemDialog;
 
 const gchar *eom_new_item_dialog_get_name(EomNewItemDialog*);
