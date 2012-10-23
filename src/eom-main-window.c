@@ -102,7 +102,7 @@ add_menu(EomMainWindow *window)
     appmenu = HILDON_APP_MENU(hildon_app_menu_new());
 
     new_button = hildon_gtk_button_new(HILDON_SIZE_AUTO);
-    gtk_button_set_label(GTK_BUTTON(new_button), "New Manga");
+    gtk_button_set_label(GTK_BUTTON(new_button), "New...");
     g_signal_connect_after(new_button, "clicked", G_CALLBACK(on_new),
                            GTK_WINDOW(window));
     hildon_app_menu_append(appmenu, GTK_BUTTON(new_button));
