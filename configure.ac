@@ -7,7 +7,7 @@ AC_PROG_INSTALL
 # Check for necessary packages
 PKG_CHECK_MODULES(EOM, hildon-1 sqlite3)
 # Add packages to flags and libs
-CFLAGS="$EOM_CFLAGS $CFLAGS"
+CFLAGS="-Wall -Wextra $EOM_CFLAGS $CFLAGS"
 LIBS="$EOM_LIBS $LIBS"
 
 desktopentrydir=`$PKG_CONFIG osso-af-settings --variable=desktopentrydir`
