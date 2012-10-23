@@ -131,7 +131,6 @@ on_volume_toggled(GtkToggleButton *togglebutton, gpointer user_data)
     EomDetailWindow *self = (EomDetailWindow *)user_data;
     gboolean active = gtk_toggle_button_get_active(togglebutton);
     gint volume = atoi(gtk_button_get_label(GTK_BUTTON(togglebutton)));
-    gchar *txt;
 
     if (active) {
         /* Add 1 to mangas collected */
@@ -161,7 +160,6 @@ on_volume_toggled(GtkToggleButton *togglebutton, gpointer user_data)
 static void
 set_manga_id(EomDetailWindow *self, gint manga_id)
 {
-    GtkWidget *bbox;
     GtkWidget *clabel, *rlabel;
     GtkWidget *ctable, *rtable;
     Manga *manga;
@@ -179,7 +177,7 @@ set_manga_id(EomDetailWindow *self, gint manga_id)
 
     ctable = gtk_table_new((int)floor(manga->total_qty / COLUMNS),
                            COLUMNS, TRUE);
-    gtk_box_pack_start(GTK_BOX(self->volsbox), ctable, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(self->volsbox), ctable, FALSE, FALSE, 0);
 
     rlabel = gtk_label_new("Read:");
     gtk_misc_set_alignment(GTK_MISC(rlabel), 0.0, 0.5);
@@ -187,7 +185,7 @@ set_manga_id(EomDetailWindow *self, gint manga_id)
 
     rtable = gtk_table_new((int)floor(manga->total_qty / COLUMNS),
                            COLUMNS, TRUE);
-    gtk_box_pack_start(GTK_BOX(self->volsbox), rtable, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(self->volsbox), rtable, FALSE, FALSE, 0);
 
     for (i = 0; i < manga->total_qty; i++) {
         GtkWidget *cbtn, *rbtn;
