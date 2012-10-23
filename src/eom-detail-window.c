@@ -10,7 +10,7 @@
 #include "eom-new-item-dialog.h"
 #include "interface.h"
 
-#define COLUMNS 8
+#define COLUMNS 4
 
 enum {
   EOM_EDIT_PROP_0,
@@ -147,6 +147,7 @@ eom_detail_window_init(EomDetailWindow *self)
 {
     GtkWidget *panarea;
     GtkWidget *clabel, *rlabel;
+    GtkWidget *vbox;
 
     add_menu(self);
 
@@ -156,23 +157,29 @@ eom_detail_window_init(EomDetailWindow *self)
                  NULL);
     gtk_container_add(GTK_CONTAINER(self), panarea);
 
-    self->volsbox = gtk_vbox_new(FALSE, 0);
+    self->volsbox = gtk_hbox_new(TRUE, 5);
     hildon_pannable_area_add_with_viewport(HILDON_PANNABLE_AREA(panarea),
                                            self->volsbox);
 
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(self->volsbox), vbox, TRUE, TRUE, 0);
+
     clabel = gtk_label_new("Collected:");
     gtk_misc_set_alignment(GTK_MISC(clabel), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(self->volsbox), clabel, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), clabel, FALSE, FALSE, 0);
 
     self->ctable = gtk_table_new(0, 0, TRUE);
-    gtk_box_pack_start(GTK_BOX(self->volsbox), self->ctable, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), self->ctable, FALSE, FALSE, 0);
+
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(self->volsbox), vbox, TRUE, TRUE, 0);
 
     rlabel = gtk_label_new("Read:");
     gtk_misc_set_alignment(GTK_MISC(rlabel), 0.0, 0.5);
-    gtk_box_pack_start(GTK_BOX(self->volsbox), rlabel, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), rlabel, FALSE, FALSE, 0);
 
     self->rtable = gtk_table_new(0, 0, TRUE);
-    gtk_box_pack_start(GTK_BOX(self->volsbox), self->rtable, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), self->rtable, FALSE, FALSE, 0);
 }
 
 static void
