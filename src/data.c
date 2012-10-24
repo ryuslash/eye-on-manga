@@ -126,11 +126,29 @@ data_get_manga_by_id(gint manga_id)
     return manga;
 }
 
+GList *
+data_get_unread_manga(void)
+{
+    const char *sql =
+        " SELECT   m.id, "
+        "          m.name, "
+        "          m.current_qty, "
+        "          m.total_qty "
+        " FROM     manga m "
+        " JOIN     volume ON (m.id = manga_id) "
+        " WHERE    read = 0 "
+        " GROUP BY m.id "
+        " ORDER BY name "
+        " COLLATE NOCASE ";
+
+    return get_manga_for_query(sql);
+}
+
 void
 data_get_volumes_for_manga(Manga *manga)
 {
     gint count;
-    Volume *volumes;
+    Volume *volumes = NULL;
     sqlite3 *db;
     sqlite3_stmt *stmt;
     gchar *data_file;

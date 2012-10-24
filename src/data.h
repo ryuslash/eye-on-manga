@@ -25,6 +25,7 @@ gboolean data_add_volume_to_manga(gint, gint);
 GList *data_get_incomplete_manga(void);
 GList *data_get_manga(void);
 Manga *data_get_manga_by_id(gint);
+GList *data_get_unread_manga(void);
 void data_get_volumes_for_manga(Manga*);
 gboolean data_mark_volume_read(gint, gint, gint);
 gboolean data_remove_volume_from_manga(gint, gint);

@@ -21,6 +21,12 @@ enum {
     NUM_COLS
 };
 
+enum {
+    STATE_NORMAL = 0,
+    STATE_COLLECT,
+    STATE_READ
+};
+
 struct filter_args {
     EomMainWindow *window;
     gint state;
@@ -56,10 +62,17 @@ eom_main_window_load(EomMainWindow *self)
 
     gtk_list_store_clear(self->store);
 
-    if (self->state)
+    switch (self->state) {
+    case STATE_COLLECT:
         list = data_get_incomplete_manga();
-    else
+        break;
+    case STATE_READ:
+        list = data_get_unread_manga();
+        break;
+    default:
         list = data_get_manga();
+        break;
+    }
 
     while (list) {
         Manga *manga = list->data;
@@ -91,14 +104,17 @@ add_menu(EomMainWindow *window)
 {
     HildonAppMenu *appmenu;
     GtkWidget *new_button;
-    GtkWidget *all_filter, *collect_filter;
+    GtkWidget *all_filter, *collect_filter, *read_filter;
     struct filter_args *args0 = malloc(sizeof(struct filter_args));
     struct filter_args *args1 = malloc(sizeof(struct filter_args));
+    struct filter_args *args2 = malloc(sizeof(struct filter_args));
 
     args0->window = window;
-    args0->state = 0;
+    args0->state = STATE_NORMAL;
     args1->window = window;
-    args1->state = 1;
+    args1->state = STATE_COLLECT;
+    args2->window = window;
+    args2->state = STATE_READ;
     appmenu = HILDON_APP_MENU(hildon_app_menu_new());
 
     new_button = hildon_gtk_button_new(HILDON_SIZE_AUTO);
@@ -122,6 +138,15 @@ add_menu(EomMainWindow *window)
                            G_CALLBACK(on_filter), args1);
     hildon_app_menu_add_filter(appmenu, GTK_BUTTON(collect_filter));
     gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(collect_filter), FALSE);
+
+    read_filter =
+        hildon_gtk_radio_button_new_from_widget(HILDON_SIZE_AUTO,
+                                                GTK_RADIO_BUTTON(all_filter));
+    gtk_button_set_label(GTK_BUTTON(read_filter), "Read");
+    g_signal_connect_after(read_filter, "clicked",
+                           G_CALLBACK(on_filter), args2);
+    hildon_app_menu_add_filter(appmenu, GTK_BUTTON(read_filter));
+    gtk_toggle_button_set_mode(GTK_TOGGLE_BUTTON(read_filter), FALSE);
 
     gtk_widget_show_all(GTK_WIDGET(appmenu));
 
