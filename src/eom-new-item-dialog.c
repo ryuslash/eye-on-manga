@@ -10,6 +10,7 @@ enum {
     EOM_NEW_PROP_MID = 1
 };
 
+static void change(GtkButton*,GtkEntry*);
 static void eom_new_item_dialog_class_init(EomNewItemDialogClass*);
 static void eom_new_item_dialog_init(EomNewItemDialog*);
 static void finalize(GObject*);
@@ -38,6 +39,33 @@ eom_new_item_dialog_new(void)
 }
 
 static void
+change(GtkButton *button, GtkEntry *entry)
+{
+    gchar action, *txt;
+    int current_value;
+    int delta;
+
+    action = gtk_button_get_label(button)[0];
+    current_value = atoi(gtk_entry_get_text(entry));
+
+    switch (action) {
+    case '-':
+        delta = -1;
+        break;
+    case '+':
+        delta = +1;
+        break;
+    default:
+        delta = 0;
+        break;
+    }
+
+    txt = g_strdup_printf("%d", current_value + delta);
+    gtk_entry_set_text(entry, txt);
+    g_free(txt);
+}
+
+static void
 eom_new_item_dialog_class_init(EomNewItemDialogClass *klass)
 {
     GObjectClass *gobject_class = G_OBJECT_CLASS(klass);
@@ -59,6 +87,7 @@ eom_new_item_dialog_init(EomNewItemDialog *dialog)
 {
     GtkWidget *content_area;
     GtkWidget *hbox;
+    GtkWidget *pbutton, *mbutton;
 
     content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
@@ -74,6 +103,18 @@ eom_new_item_dialog_init(EomNewItemDialog *dialog)
     g_object_set(G_OBJECT(dialog->qty_entry), "width-chars", 5, NULL);
     hildon_entry_set_text(HILDON_ENTRY(dialog->qty_entry), "0");
     gtk_box_pack_start(GTK_BOX(hbox), dialog->qty_entry, TRUE, TRUE, 0);
+
+    mbutton = hildon_gtk_button_new(HILDON_SIZE_AUTO);
+    gtk_button_set_label(GTK_BUTTON(mbutton), "-");
+    g_signal_connect_after(mbutton, "clicked", G_CALLBACK(change),
+                           dialog->qty_entry);
+    gtk_box_pack_start(GTK_BOX(hbox), mbutton, FALSE, FALSE, 0);
+
+    pbutton = hildon_gtk_button_new(HILDON_SIZE_AUTO);
+    gtk_button_set_label(GTK_BUTTON(pbutton), "+");
+    g_signal_connect_after(pbutton, "clicked", G_CALLBACK(change),
+                           dialog->qty_entry);
+    gtk_box_pack_start(GTK_BOX(hbox), pbutton, FALSE, FALSE, 0);
 
     gtk_window_set_title(GTK_WINDOW(dialog), "New item");
     gtk_dialog_add_buttons(GTK_DIALOG(dialog),
