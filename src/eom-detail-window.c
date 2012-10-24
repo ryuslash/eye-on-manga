@@ -36,13 +36,19 @@ void
 eom_detail_window_load(EomDetailWindow *self)
 {
     gint i, j = 0, row = 0, col = 0;
-    int rows = (int)floor(self->manga->total_qty / COLUMNS);
+    int total_qty = self->manga->total_qty;
+    int rows;
+
+    if (!total_qty)
+        total_qty = self->manga->current_qty + 1;
+
+    rows = (int)floor(total_qty / COLUMNS);
 
     gtk_window_set_title(GTK_WINDOW(self), self->manga->name);
     gtk_table_resize(GTK_TABLE(self->ctable), rows, COLUMNS);
     gtk_table_resize(GTK_TABLE(self->rtable), rows, COLUMNS);
 
-    for (i = 0; i < self->manga->total_qty; i++) {
+    for (i = 0; i < total_qty; i++) {
         GtkWidget *cbtn, *rbtn;
         gchar *txt;
 
@@ -275,6 +281,9 @@ on_volume_toggled(GtkToggleButton *togglebutton, gpointer user_data)
         }
         self->manga->current_qty--;
     }
+
+    if (!self->manga->total_qty)
+        eom_detail_window_load(self);
 }
 
 static void
