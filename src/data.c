@@ -57,6 +57,25 @@ data_add_volume_to_manga(gint manga_id, gint volume)
     return ret;
 }
 
+gboolean
+data_delete_manga(gint manga_id)
+{
+    char *sql = g_strdup_printf("DELETE FROM volume "
+                                "WHERE manga_id = %d", manga_id);
+    gboolean ret = execute_non_query(sql);
+
+    g_free(sql);
+
+    if (ret) {
+        sql = g_strdup_printf("DELETE FROM manga "
+                              "WHERE id = %d", manga_id);
+        ret = execute_non_query(sql);
+        g_free(sql);
+    }
+
+    return ret;
+}
+
 GList *
 data_get_incomplete_manga(void)
 {
@@ -255,6 +274,7 @@ data_update_manga(gint manga_id, const gchar *name, gint total_qty)
                               "AND id > %d",
                               manga_id, total_qty);
         ret = execute_non_query(sql);
+        g_free(sql);
     }
 
     return ret;

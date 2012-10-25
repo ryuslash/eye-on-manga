@@ -24,6 +24,7 @@ static void eom_detail_window_class_init(EomDetailWindowClass*);
 static void eom_detail_window_init(EomDetailWindow *self);
 static void finalize(GObject*);
 static void get_property(GObject*, guint, GValue*, GParamSpec*);
+static void on_delete(GtkWidget*, gpointer);
 static void on_edit(GtkWidget*, EomDetailWindow*);
 static void on_volume_read_toggled(GtkToggleButton*, gpointer);
 static void on_volume_toggled(GtkToggleButton*, gpointer);
@@ -102,18 +103,26 @@ static void
 add_menu(EomDetailWindow *window)
 {
     HildonAppMenu *appmenu;
-    GtkWidget *edit_button;
+    GtkWidget *button;
 
     appmenu = HILDON_APP_MENU(hildon_app_menu_new());
 
-    edit_button = hildon_gtk_button_new(HILDON_SIZE_AUTO);
-    gtk_button_set_label(GTK_BUTTON(edit_button), "Edit...");
-    g_signal_connect_after(edit_button, "clicked", G_CALLBACK(on_edit),
+    button = hildon_gtk_button_new(HILDON_SIZE_AUTO);
+    gtk_button_set_label(GTK_BUTTON(button), "Edit...");
+    g_signal_connect_after(button, "clicked", G_CALLBACK(on_edit),
                            window);
-    hildon_app_menu_append(appmenu, GTK_BUTTON(edit_button));
+    hildon_app_menu_append(appmenu, GTK_BUTTON(button));
+
+    button = hildon_gtk_button_new(HILDON_SIZE_AUTO);
+    gtk_button_set_label(GTK_BUTTON(button), "Delete...");
+    g_signal_connect_after(button, "clicked", G_CALLBACK(on_delete),
+                           (gpointer)window);
+    hildon_app_menu_append(appmenu, GTK_BUTTON(button));
+
     gtk_widget_show_all(GTK_WIDGET(appmenu));
-    hildon_stackable_window_set_main_menu(HILDON_STACKABLE_WINDOW(window),
-                                          HILDON_APP_MENU(appmenu));
+    hildon_stackable_window_set_main_menu(
+        HILDON_STACKABLE_WINDOW(window), appmenu
+    );
 }
 
 static void
@@ -220,6 +229,42 @@ get_property(GObject *object, guint property_id, GValue *value,
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
         break;
+    }
+}
+
+static void
+on_delete(GtkWidget *widget, gpointer user_data)
+{
+    GtkWidget *dialog, *label, *content_area;
+    EomDetailWindow *self = EOM_DETAIL_WINDOW(user_data);
+    gint result;
+    gchar *ttxt, *ctxt;
+
+    ttxt = g_strdup_printf("Delete %s", self->manga->name);
+    ctxt = g_strdup_printf("Really delete \"%s\"?", self->manga->name);
+    dialog = gtk_dialog_new_with_buttons(
+        ttxt, GTK_WINDOW(self), GTK_DIALOG_MODAL,
+        GTK_STOCK_OK, GTK_RESPONSE_OK,
+        GTK_STOCK_CANCEL, GTK_RESPONSE_REJECT,
+        NULL
+    );
+    content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    label = gtk_label_new(ctxt);
+
+    gtk_container_add(GTK_CONTAINER(content_area), label);
+    gtk_widget_show(label);
+
+    result = gtk_dialog_run(GTK_DIALOG(dialog));
+
+    gtk_widget_destroy(dialog);
+    g_free(ttxt);
+    g_free(ctxt);
+
+    if (result == GTK_RESPONSE_OK) {
+        if (data_delete_manga(self->manga->id)) {
+            gtk_widget_hide(GTK_WIDGET(self));
+            gtk_widget_destroy(GTK_WIDGET(self));
+        }
     }
 }
 

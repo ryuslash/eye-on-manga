@@ -6,8 +6,8 @@
 #include <hildon/hildon.h>
 #include <gtk/gtk.h>
 
-#include "eom-new-item-dialog.h"
 #include "data.h"
+#include "eom-new-item-dialog.h"
 #include "interface.h"
 
 G_DEFINE_TYPE(EomMainWindow, eom_main_window,
@@ -35,7 +35,7 @@ struct filter_args {
 static void add_menu(EomMainWindow*);
 static void eom_main_window_class_init(EomMainWindowClass*);
 static void eom_main_window_init(EomMainWindow*);
-static gboolean on_edit_closed(GtkWidget*, GdkEvent*, gpointer);
+static void on_detail_hidden(GtkWidget*, gpointer);
 static void on_filter(GtkWidget*, struct filter_args*);
 static void on_new(GtkWidget*, GtkWindow*);
 static void on_row_activated(GtkWidget*, GtkTreePath*, GtkTreeViewColumn*, gpointer);
@@ -236,14 +236,11 @@ eom_main_window_init(EomMainWindow *window)
     g_object_unref(window->store);
 }
 
-static gboolean
-on_edit_closed(GtkWidget *widget, GdkEvent *event, gpointer user_data)
+static void
+on_detail_hidden(GtkWidget *widget, gpointer user_data)
 {
-    EomMainWindow *self = user_data;
-
+    EomMainWindow *self = EOM_MAIN_WINDOW(user_data);
     eom_main_window_load(self);
-
-    return FALSE;
 }
 
 static void
@@ -294,6 +291,5 @@ on_row_activated(GtkWidget *treeview, GtkTreePath *path,
 
     gtk_tree_model_get(model, &iter, COL_ID, &id, -1);
     window = interface_show_detail_window(id);
-    g_signal_connect(window, "delete-event", G_CALLBACK(on_edit_closed),
-                     self);
+    g_signal_connect(window, "hide", G_CALLBACK(on_detail_hidden), self);
 }

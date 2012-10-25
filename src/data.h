@@ -22,6 +22,7 @@ typedef struct
 gboolean data_add_manga(const gchar*, gint);
 gboolean data_add_to_manga(gint, gint);
 gboolean data_add_volume_to_manga(gint, gint);
+gboolean data_delete_manga(gint);
 GList *data_get_incomplete_manga(void);
 GList *data_get_manga(void);
 Manga *data_get_manga_by_id(gint);
