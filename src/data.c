@@ -239,11 +239,23 @@ gboolean
 data_update_manga(gint manga_id, const gchar *name, gint total_qty)
 {
     gchar *sql =
-        g_strdup_printf("UPDATE manga SET name = '%s', total_qty = %d "
-                        "WHERE id = %d", name, total_qty, manga_id);
+        g_strdup_printf("UPDATE manga SET "
+                        "       name = '%s', "
+                        "       total_qty = %d, "
+                        "       current_qty = MIN(current_qty, %d) "
+                        "WHERE id = %d", name, total_qty, total_qty,
+                        manga_id);
     gboolean ret = execute_non_query(sql);
 
     g_free(sql);
+
+    if (ret) {
+        sql = g_strdup_printf("DELETE FROM volume "
+                              "WHERE manga_id = %d "
+                              "AND id > %d",
+                              manga_id, total_qty);
+        ret = execute_non_query(sql);
+    }
 
     return ret;
 }

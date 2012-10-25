@@ -18,6 +18,7 @@ enum {
 };
 
 static void add_menu(EomDetailWindow*);
+static void cb_destroy(GtkWidget*, gpointer);
 static GtkWidget *create_volume_button(gchar*, GtkTable*, int, int);
 static void eom_detail_window_class_init(EomDetailWindowClass*);
 static void eom_detail_window_init(EomDetailWindow *self);
@@ -42,10 +43,12 @@ eom_detail_window_load(EomDetailWindow *self)
     if (!total_qty)
         total_qty = self->manga->current_qty + 1;
 
-    rows = (int)floor(total_qty / COLUMNS);
+    rows = (int)ceil(total_qty / COLUMNS);
 
     gtk_window_set_title(GTK_WINDOW(self), self->manga->name);
+    gtk_container_foreach(GTK_CONTAINER(self->ctable), cb_destroy, NULL);
     gtk_table_resize(GTK_TABLE(self->ctable), rows, COLUMNS);
+    gtk_container_foreach(GTK_CONTAINER(self->rtable), cb_destroy, NULL);
     gtk_table_resize(GTK_TABLE(self->rtable), rows, COLUMNS);
 
     for (i = 0; i < total_qty; i++) {
@@ -111,6 +114,12 @@ add_menu(EomDetailWindow *window)
     gtk_widget_show_all(GTK_WIDGET(appmenu));
     hildon_stackable_window_set_main_menu(HILDON_STACKABLE_WINDOW(window),
                                           HILDON_APP_MENU(appmenu));
+}
+
+static void
+cb_destroy(GtkWidget *widget, gpointer user_data)
+{
+    gtk_widget_destroy(widget);
 }
 
 static GtkWidget *
@@ -264,26 +273,22 @@ on_volume_toggled(GtkToggleButton *togglebutton, gpointer user_data)
             return;
         }
         if (!data_add_volume_to_manga(self->manga->id, volume)) {
-            data_add_to_manga(self->manga->id, 1);
+            data_add_to_manga(self->manga->id, -1);
             return;
         }
-        self->manga->current_qty++;
     }
     else {
         /* Remove 1 from mangas collected */
         if (!data_add_to_manga(self->manga->id, -1)) {
             return;
         }
-        if (!data_remove_volume_from_manga(self->manga->id,
-                                           volume)) {
+        if (!data_remove_volume_from_manga(self->manga->id, volume)) {
             data_add_to_manga(self->manga->id, 1); /* Undo */
             return;
         }
-        self->manga->current_qty--;
     }
 
-    if (!self->manga->total_qty)
-        eom_detail_window_load(self);
+    set_manga_id(self, self->manga->id);
 }
 
 static void
