@@ -28,22 +28,26 @@
 
 static gboolean check_and_create_database(gchar*);
 static gint create_new_database(const gchar*);
-static gboolean execute_non_query(const char *sql);
+static gboolean execute_non_query(const char *sql,
+                                  int (*bind)(sqlite3_stmt*));
+static sqlite3 *get_database(void);
 static GList *get_manga_for_query(const gchar*);
 static Manga *get_manga_from_statement(sqlite3_stmt*);
 
 gboolean
 data_add_manga(const gchar *name, gint total_qty)
 {
-    gchar *sql =
-        g_strdup_printf(" INSERT INTO manga (name, current_qty, "
-                        "total_qty) VALUES ('%s', 0, %d)",
-                        name, total_qty);
-    gboolean ret = execute_non_query(sql);
+    gboolean result = FALSE;
+    char sql[] = "INSERT INTO manga (name, current_qty, total_qty) "
+        "VALUES (?, 0, ?)";
 
-    g_free(sql);
+    int bind_variables(sqlite3_stmt *stmt) {
+        return (sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC)
+                == SQLITE_OK)
+            && (sqlite3_bind_int(stmt, 2, total_qty) == SQLITE_OK);
+    }
 
-    return ret;
+    return execute_non_query(sql, bind_variables);
 }
 
 gboolean
@@ -53,7 +57,7 @@ data_add_to_manga(gint manga_id, gint count)
         g_strdup_printf(" UPDATE manga "
                         " SET current_qty = current_qty + %d "
                         " WHERE id = %d", count, manga_id);
-    gboolean ret = execute_non_query(sql);
+    gboolean ret = execute_non_query(sql, NULL);
 
     g_free(sql);
 
@@ -66,7 +70,7 @@ data_add_volume_to_manga(gint manga_id, gint volume)
     char *sql = g_strdup_printf(" INSERT INTO volume "
                                 " VALUES (%d, %d, 0) ",
                                 manga_id, volume);
-    gboolean ret = execute_non_query(sql);
+    gboolean ret = execute_non_query(sql, NULL);
 
     g_free(sql);
 
@@ -78,14 +82,14 @@ data_delete_manga(gint manga_id)
 {
     char *sql = g_strdup_printf("DELETE FROM volume "
                                 "WHERE manga_id = %d", manga_id);
-    gboolean ret = execute_non_query(sql);
+    gboolean ret = execute_non_query(sql, NULL);
 
     g_free(sql);
 
     if (ret) {
         sql = g_strdup_printf("DELETE FROM manga "
                               "WHERE id = %d", manga_id);
-        ret = execute_non_query(sql);
+        ret = execute_non_query(sql, NULL);
         g_free(sql);
     }
 
@@ -250,7 +254,7 @@ data_mark_volume_read(int read, gint manga_id, gint volume)
                                  " WHERE  manga_id = %d "
                                  " AND    id = %d ",
                                  read, manga_id, volume);
-    gboolean ret = execute_non_query(sql);
+    gboolean ret = execute_non_query(sql, NULL);
 
     g_free(sql);
 
@@ -263,7 +267,7 @@ data_remove_volume_from_manga(gint manga_id, gint volume)
     char *sql = g_strdup_printf(" DELETE FROM volume "
                                 " WHERE manga_id = %d "
                                 " AND id = %d ", manga_id, volume);
-    gboolean ret = execute_non_query(sql);
+    gboolean ret = execute_non_query(sql, NULL);
 
     g_free(sql);
 
@@ -280,7 +284,7 @@ data_update_manga(gint manga_id, const gchar *name, gint total_qty)
                         "       current_qty = MIN(current_qty, %d) "
                         "WHERE id = %d", name, total_qty, total_qty,
                         manga_id);
-    gboolean ret = execute_non_query(sql);
+    gboolean ret = execute_non_query(sql, NULL);
 
     g_free(sql);
 
@@ -289,7 +293,7 @@ data_update_manga(gint manga_id, const gchar *name, gint total_qty)
                               "WHERE manga_id = %d "
                               "AND id > %d",
                               manga_id, total_qty);
-        ret = execute_non_query(sql);
+        ret = execute_non_query(sql, NULL);
         g_free(sql);
     }
 
@@ -368,32 +372,44 @@ create_new_database(const gchar *filename)
 }
 
 static gboolean
-execute_non_query(const gchar *sql)
+execute_non_query(const gchar *sql, int (*bind)(sqlite3_stmt *))
 {
-    sqlite3 *db;
+    sqlite3 *db = get_database();
     sqlite3_stmt *stmt;
-    gchar *data_file;
     gboolean result;
 
     result = FALSE;
-    data_file = eom_get_data_file();
 
-    if (check_and_create_database(data_file)) {
-        if (sqlite3_open(data_file, &db) == SQLITE_OK) {
-            int res =
-                sqlite3_prepare_v2(db, sql, strlen(sql), &stmt, NULL);
+    if (db) {
+        int res =
+            sqlite3_prepare_v2(db, sql, strlen(sql), &stmt, NULL);
 
-            if (res == SQLITE_OK) {
-                if (sqlite3_step(stmt) == SQLITE_DONE)
-                    result = TRUE;
-            }
-
-            sqlite3_finalize(stmt);
+        if (res == SQLITE_OK) {
+            if (bind && bind(stmt) && sqlite3_step(stmt) == SQLITE_DONE)
+                result = TRUE;
         }
+
+        sqlite3_finalize(stmt);
         sqlite3_close(db);
     }
 
     return result;
+}
+
+static sqlite3 *
+get_database(void)
+{
+    sqlite3 *db;
+    gchar *data_file = eom_get_data_file();
+
+    if (check_and_create_database(data_file)) {
+        if (sqlite3_open(data_file, &db) == SQLITE_OK)
+            return db;
+        else
+            sqlite3_close(db);
+    }
+
+    return NULL;
 }
 
 static GList *
