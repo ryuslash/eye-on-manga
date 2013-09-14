@@ -285,6 +285,9 @@ on_new(GtkWidget *widget, GtkWindow *window)
     if (name != NULL) {
         if (data_add_manga(name, total_qty))
             eom_main_window_load(EOM_MAIN_WINDOW(window));
+        else
+            hildon_banner_show_information(window, NULL,
+                                           "Could not add manga");
     }
 
     gtk_widget_destroy(dialog);
