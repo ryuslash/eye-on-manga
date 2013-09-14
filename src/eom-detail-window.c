@@ -281,6 +281,10 @@ on_delete(GtkWidget *widget, gpointer user_data)
             gtk_widget_hide(GTK_WIDGET(self));
             gtk_widget_destroy(GTK_WIDGET(self));
         }
+        else
+            hildon_banner_show_information(
+                self, NULL, "Could not delete manga"
+            );
     }
 }
 
@@ -305,6 +309,10 @@ on_edit(GtkWidget *widget, EomDetailWindow *self)
     if (name != NULL) {
         if (data_update_manga(self->manga->id, name, total_qty))
             set_manga_id(self, self->manga->id);
+        else
+            hildon_banner_show_information(
+                self, NULL, "Could not update manga information"
+            );
     }
 
     gtk_widget_destroy(dialog);
@@ -318,7 +326,9 @@ on_volume_read_toggled(GtkToggleButton *togglebutton, gpointer user_data)
     gint volume = atoi(gtk_button_get_label(GTK_BUTTON(togglebutton)));
 
     if (!data_mark_volume_read(active, self->manga->id, volume))
-        g_print("coulnd't mark volume as read\n");
+        hildon_banner_show_information(
+            self, NULL, "Could not mark volume as read"
+        );
 }
 
 static void
@@ -331,20 +341,33 @@ on_volume_toggled(GtkToggleButton *togglebutton, gpointer user_data)
     if (active) {
         /* Add 1 to mangas collected */
         if (!data_add_to_manga(self->manga->id, 1)) {
+            hildon_banner_show_information(
+                self, NULL,
+                "Could not increase the collected manga count"
+            );
             return;
         }
         if (!data_add_volume_to_manga(self->manga->id, volume)) {
             data_add_to_manga(self->manga->id, -1);
+            hildon_banner_show_information(
+                self, NULL, "Could not add volume to collection");
             return;
         }
     }
     else {
         /* Remove 1 from mangas collected */
         if (!data_add_to_manga(self->manga->id, -1)) {
+            hildon_banner_show_information(
+                self, NULL,
+                "Could not decrease the collected manga count"
+            );
             return;
         }
         if (!data_remove_volume_from_manga(self->manga->id, volume)) {
             data_add_to_manga(self->manga->id, 1); /* Undo */
+            hildon_banner_show_information(
+                self, NULL, "Could not remove volume from collection"
+            );
             return;
         }
     }
